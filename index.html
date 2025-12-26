@@ -4,87 +4,262 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Sapphic Shelves | Archive Protocol</title>
+  <title>Sapphic Shelves | Android Archive</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400;1,600&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
   <script>
     tailwind.config = {
       theme: {
         extend: {
           colors: {
-            parchment: 'var(--bg-color)',
-            ink: 'var(--text-color)',
-            celeste: '#B2FFFF',
-            gold: '#C5A059',
-            mica: 'var(--mica-color)',
+            md: {
+              sys: {
+                primary: '#034078',
+                onPrimary: '#FFFFFF',
+                surface: '#E4DFDA',
+                onSurface: '#011D4D',
+                secondaryContainer: '#1282A2',
+                onSecondaryContainer: '#FFFFFF',
+                outline: '#63372C',
+              }
+            },
+            parchment: '#E4DFDA',
+            brand: {
+              deep: '#011D4D',
+              cyan: '#1282A2',
+            },
+            plum: '#63372C',
+            rose: '#034078',
           },
           fontFamily: {
             header: ['Cormorant Garamond', 'serif'],
-            sans: ['Instrument Sans', 'sans-serif'],
+            sans: ['system-ui', '-apple-system', 'Roboto', 'sans-serif'],
           },
         }
       }
-    }
+    };
   </script>
   <style>
-    :root[data-theme="light"] {
-      --bg-color: #F7F3E9;
-      --text-color: #1A1A1A;
-      --mica-color: rgba(255, 255, 255, 0.98);
+    :root {
+      --bg-color: #E4DFDA;
+      --text-color: #011D4D;
+      --md-primary: #034078;
+      --md-surface: #E4DFDA;
     }
-    :root[data-theme="dark"] {
-      --bg-color: #18181b;
-      --text-color: #f4f4f5;
-      --mica-color: rgba(39, 39, 42, 0.9);
-    }
-    :root[data-theme="sepia"] {
-      --bg-color: #f4ecd8;
-      --text-color: #5b4636;
-      --mica-color: rgba(250, 243, 224, 0.95);
+    
+    body {
+      background-color: #d1cbc5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      font-family: 'Instrument Sans', sans-serif;
     }
 
-    body {
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      transition: background-color 0.5s, color 0.5s;
-      overflow-x: hidden;
-      -webkit-font-smoothing: antialiased;
+    /* The Android Chassis */
+    .android-device {
+      width: 360px;
+      height: 800px;
+      background: #011D4D;
+      border: 12px solid #011D4D;
+      border-radius: 36px;
+      box-shadow: 0 25px 50px -12px rgba(0, 29, 77, 0.5);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
     }
-    .mica-surface {
-      background: var(--mica-color);
-      backdrop-filter: blur(8px);
+
+    .screen {
+      flex: 1;
+      background: var(--md-surface);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
     }
-    .plinth-shadow {
-      box-shadow: 0 -4px 20px -5px rgba(0,0,0,0.1);
+
+    .status-bar {
+      height: 24px;
+      background: var(--md-surface);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0 16px;
+      font-size: 10px;
+      font-weight: bold;
+      color: #011D4D;
+      z-index: 100;
     }
-    .foil-stamping {
-      text-shadow: 0.5px 0.5px 0px rgba(197, 160, 89, 0.3);
+
+    .scroll-container {
+      flex: 1;
+      overflow-y: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
     }
-    .dvh-screen {
-      height: 100dvh;
+    .scroll-container::-webkit-scrollbar {
+      display: none;
     }
-    @keyframes pulse-gold {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.7; transform: scale(1.05); }
+
+    .top-app-bar {
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      background: var(--md-surface);
+      z-index: 50;
     }
-    .animate-pulse-gold {
-      animation: pulse-gold 2s infinite;
+
+    .bottom-nav {
+      height: 80px;
+      background: #E4DFDA;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      border-top: 1px solid rgba(1, 29, 77, 0.1);
+      z-index: 50;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      color: #034078;
+      flex: 1;
+      cursor: pointer;
+      position: relative;
+      opacity: 0.6;
+    }
+
+    .nav-item.active {
+      opacity: 1;
+    }
+
+    .nav-item.active .nav-icon-bg {
+      background: #1282A2;
+      color: #FFFFFF;
+    }
+
+    .nav-icon-bg {
+      padding: 4px 20px;
+      border-radius: 16px;
+      transition: all 0.2s ease;
+    }
+
+    .nav-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .fab {
+      position: absolute;
+      bottom: 96px;
+      right: 16px;
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: var(--md-primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(3, 64, 120, 0.4);
+      z-index: 60;
+      transition: transform 0.2s;
+    }
+    .fab:active {
+      transform: scale(0.9);
+    }
+
+    .ripple {
+      position: relative;
+      overflow: hidden;
+    }
+    .ripple::after {
+      content: "";
+      display: block;
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      background-image: radial-gradient(circle, #011D4D 10%, transparent 10.01%);
+      background-repeat: no-repeat;
+      background-position: 50%;
+      transform: scale(10, 10);
+      opacity: 0;
+      transition: transform .5s, opacity 1s;
+    }
+    .ripple:active::after {
+      transform: scale(0, 0);
+      opacity: .1;
+      transition: 0s;
+    }
+
+    /* CSS Book Cover Generator */
+    .book-thumb {
+      width: 48px;
+      height: 72px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+      text-align: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      color: white;
+      font-size: 6px;
+      line-height: 1.1;
+      box-shadow: 2px 2px 5px rgba(1, 29, 77, 0.2);
+    }
+
+    [data-theme="dark"] .android-device {
+      border-color: #000;
+      background: #000;
+    }
+    [data-theme="dark"] .screen {
+      background: #011D4D;
+      color: #E4DFDA;
+    }
+    [data-theme="dark"] .status-bar {
+      background: #011D4D;
+      color: white;
+    }
+    [data-theme="dark"] .top-app-bar {
+      background: #011D4D;
+    }
+    [data-theme="dark"] .bottom-nav {
+      background: #011D4D;
+      border-top-color: rgba(228, 223, 218, 0.1);
+    }
+    [data-theme="dark"] .nav-item {
+      color: #1282A2;
     }
   </style>
 <script type="importmap">
 {
   "imports": {
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.34.0"
+    "react-dom": "https://esm.sh/react-dom@19.2.3",
+    "react-dom/client": "https://esm.sh/react-dom@19.2.3/client",
+    "react/": "https://esm.sh/react@19.2.3/",
+    "react": "https://esm.sh/react@19.2.3",
+    "@google/genai": "https://esm.sh/@google/genai@1.34.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
   }
 }
 </script>
 </head>
-<body class="font-sans">
+<body class="antialiased">
   <div id="root"></div>
 </body>
 </html>

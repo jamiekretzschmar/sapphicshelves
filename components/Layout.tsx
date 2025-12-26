@@ -2,71 +2,105 @@
 import React from 'react';
 import { ICONS } from '../constants';
 import { NavigationTab, Theme } from '../types';
+import Logo from './Logo';
 
 interface LayoutProps {
   children: React.ReactNode;
   activeTab: NavigationTab;
   onTabChange: (tab: NavigationTab) => void;
-  archivistIcon?: string;
   theme: Theme;
   onToggleTheme: () => void;
+  onOpenSettings: () => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange, archivistIcon, theme, onToggleTheme }) => {
+const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange, theme, onToggleTheme, onOpenSettings }) => {
   return (
-    <div className={`flex dvh-screen ${theme === 'dark' ? 'bg-zinc-900 text-zinc-100' : theme === 'sepia' ? 'bg-[#f4ecd8] text-[#5b4636]' : 'bg-parchment text-ink'} selection:bg-celeste overflow-hidden transition-colors duration-500`}>
+    <div className="android-device" data-theme={theme}>
+      <div className="status-bar">
+        <span>12:45</span>
+      </div>
       
-      {/* Desktop Navigation Rail */}
-      <aside className="hidden md:flex flex-col w-20 border-r border-ink/5 bg-mica-surface items-center py-8 space-y-8 z-50">
-        <div className="mb-4">
-           {archivistIcon ? <img src={archivistIcon} className="w-10 h-10 rounded-full border border-gold/30" /> : <div className="w-10 h-10 rounded-full bg-gold/10" />}
-        </div>
-        <RailButton active={activeTab === NavigationTab.LIBRARY} onClick={() => onTabChange(NavigationTab.LIBRARY)} icon={<ICONS.Library className="w-5 h-5" />} label="Monograph" />
-        <RailButton active={activeTab === NavigationTab.PULSES} onClick={() => onTabChange(NavigationTab.PULSES)} icon={<ICONS.Pulse className="w-5 h-5" />} label="Favored" />
-        <RailButton active={activeTab === NavigationTab.SCANNER} onClick={() => onTabChange(NavigationTab.SCANNER)} icon={<ICONS.Scanner className="w-5 h-5" />} label="Acquire" />
-        <div className="flex-1" />
-        <RailButton active={false} onClick={onToggleTheme} icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z" /></svg>} label="Theme" />
-        <RailButton active={activeTab === NavigationTab.SETTINGS} onClick={() => onTabChange(NavigationTab.SETTINGS)} icon={<ICONS.Settings className="w-5 h-5" />} label="Folio" />
-      </aside>
-
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="md:hidden px-6 py-4 flex items-center justify-between border-b border-ink/5 bg-mica-surface">
-          <h1 className="font-header text-2xl font-semibold foil-stamping">Sapphic Shelves</h1>
-          {archivistIcon && <img src={archivistIcon} className="w-8 h-8 rounded-full" />}
+      <div className="screen">
+        <header className="top-app-bar border-b border-black/5">
+          <div className="flex items-center gap-2">
+            <Logo size={32} className="shrink-0" />
+            <h1 className="font-header text-lg font-bold text-md-sys-primary italic leading-none">Sapphic Shelves</h1>
+          </div>
+          <div className="flex items-center gap-1">
+            <button onClick={onToggleTheme} className="p-2 rounded-full hover:bg-black/5 transition-colors text-md-sys-outline">
+              {theme === 'dark' ? '🌙' : theme === 'sepia' ? '📜' : '☀️'}
+            </button>
+            <button onClick={onOpenSettings} className="p-2 rounded-full hover:bg-black/5 text-md-sys-outline">
+              <ICONS.Settings className="w-5 h-5" />
+            </button>
+          </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto px-4 pb-24 md:pb-8 pt-4">
-          <div className="max-w-3xl mx-auto space-y-6">
-            {children}
-          </div>
-        </main>
+        <div className="scroll-container">
+          {children}
+        </div>
 
-        {/* Mobile Nav Plinth */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 mica-surface plinth-shadow border-t border-ink/10 pb-[env(safe-area-inset-bottom)] z-50">
-          <div className="flex items-center justify-around h-16">
-            <RailButton active={activeTab === NavigationTab.LIBRARY} onClick={() => onTabChange(NavigationTab.LIBRARY)} icon={<ICONS.Library className="w-5 h-5" />} label="Library" />
-            <RailButton active={activeTab === NavigationTab.PULSES} onClick={() => onTabChange(NavigationTab.PULSES)} icon={<ICONS.Pulse className="w-5 h-5" />} label="Favored" />
-            <RailButton active={activeTab === NavigationTab.SCANNER} onClick={() => onTabChange(NavigationTab.SCANNER)} icon={<ICONS.Scanner className="w-5 h-5" />} label="Scan" />
-            <RailButton active={activeTab === NavigationTab.SETTINGS} onClick={() => onTabChange(NavigationTab.SETTINGS)} icon={<ICONS.Settings className="w-5 h-5" />} label="Folio" />
-          </div>
+        {activeTab !== NavigationTab.SCANNER && (
+          <button 
+            className="fab"
+            onClick={() => onTabChange(NavigationTab.SCANNER)}
+            aria-label="Acquire New Volume"
+          >
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+        )}
+
+        <nav className="bottom-nav">
+          <NavItem 
+            active={activeTab === NavigationTab.LIBRARY} 
+            onClick={() => onTabChange(NavigationTab.LIBRARY)} 
+            icon={<ICONS.Library className="w-6 h-6" />} 
+            label="Library" 
+          />
+          <NavItem 
+            active={activeTab === NavigationTab.BEHOLD} 
+            onClick={() => onTabChange(NavigationTab.BEHOLD)} 
+            icon={<ICONS.Behold className="w-6 h-6" />} 
+            label="Shelves" 
+          />
+          <NavItem 
+            active={activeTab === NavigationTab.LEXICON} 
+            onClick={() => onTabChange(NavigationTab.LEXICON)} 
+            icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>} 
+            label="Lexicon" 
+          />
+          <NavItem 
+            active={activeTab === NavigationTab.PULSES} 
+            onClick={() => onTabChange(NavigationTab.PULSES)} 
+            icon={<ICONS.Pulse className="w-6 h-6" />} 
+            label="Pulses" 
+          />
+          <NavItem 
+            active={activeTab === NavigationTab.DISCOVER} 
+            onClick={() => onTabChange(NavigationTab.DISCOVER)} 
+            icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>} 
+            label="Engine" 
+          />
         </nav>
       </div>
     </div>
   );
 };
 
-const RailButton: React.FC<{ active: boolean; onClick: () => void; icon: React.ReactNode; label: string }> = ({ 
+const NavItem: React.FC<{ active: boolean; onClick: () => void; icon: React.ReactNode; label: string }> = ({ 
   active, onClick, icon, label 
 }) => (
-  <button 
+  <div 
     onClick={onClick}
-    className={`flex flex-col items-center justify-center transition-all duration-300 ${
-      active ? 'text-gold' : 'text-ink/40 hover:text-ink/70'
-    }`}
+    className={`nav-item ripple ${active ? 'active' : ''}`}
   >
-    {icon}
-    <span className="text-[8px] font-bold tracking-widest uppercase mt-1 hidden md:block">{label}</span>
-  </button>
+    <div className="nav-icon-bg">
+      {icon}
+    </div>
+    <span className="nav-label">{label}</span>
+  </div>
 );
 
 export default Layout;

@@ -58,7 +58,7 @@ export const geminiService = {
     const ai = getAIClient();
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: PROMPTS.METADATA_ENRICH(title, author),
+      contents: `Find the ISBN, a 2-sentence synopsis, 3-5 primary tropes, and a direct URL to a high-quality book cover image for "${title}" by ${author}. Focus on sapphic/queer literary significance. Return as JSON.`,
       config: {
         tools: [{ googleSearch: {} }],
         responseMimeType: 'application/json',
@@ -67,13 +67,14 @@ export const geminiService = {
           properties: {
             isbn: { type: Type.STRING },
             synopsis: { type: Type.STRING },
+            coverUrl: { type: Type.STRING, description: 'URL to the book cover image' },
             tropes: { type: Type.ARRAY, items: { type: Type.STRING } }
           }
         }
       }
     });
 
-    let metadata = {};
+    let metadata: any = {};
     try {
       metadata = JSON.parse(response.text || '{}');
     } catch (e) {
@@ -87,12 +88,46 @@ export const geminiService = {
     return { ...metadata, sourceUrls };
   },
 
-  async getAuthorPulse(authorName: string): Promise<any> {
+  async fetchByExternalId(type: string, id: string): Promise<any> {
     const ai = getAIClient();
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
-      contents: PROMPTS.AUTHOR_PULSE(authorName),
+      contents: `Identify the book with ${type} ID: ${id}. Provide the title, author, and a brief synopsis. Use Google Search to ensure accurate metadata. Return as JSON.`,
       config: {
+        tools: [{ googleSearch: {} }],
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            title: { type: Type.STRING },
+            author: { type: Type.STRING },
+            synopsis: { type: Type.STRING }
+          }
+        }
+      }
+    });
+
+    try {
+      return JSON.parse(response.text || '{}');
+    } catch (e) {
+      return null;
+    }
+  },
+
+  async syncAuthorFullRecord(authorName: string): Promise<any> {
+    const ai = getAIClient();
+    const prompt = `Research the author ${authorName} for a queer literature archive.
+    1. Biography: 3-paragraph summary of their life and queer identity impact.
+    2. Context: Historical era/literary movement.
+    3. Bibliography: List of their major books.
+    4. Releases: Any books released in the last 60 days or announced for the future.
+    Use Google Search for ground truth. Return as a JSON object.`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      contents: prompt,
+      config: {
+        thinkingConfig: { thinkingBudget: 2000 },
         tools: [{ googleSearch: {} }],
         responseMimeType: 'application/json',
         responseSchema: {
@@ -100,40 +135,7 @@ export const geminiService = {
           properties: {
             biography: { type: Type.STRING },
             historicalContext: { type: Type.STRING },
-            bibliography: { type: Type.ARRAY, items: { type: Type.STRING } }
-          }
-        }
-      }
-    });
-
-    let pulseData = {};
-    try {
-      pulseData = JSON.parse(response.text || '{}');
-    } catch (e) {
-      console.warn("Pulse fallback parsing");
-    }
-
-    const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks
-      ?.map((chunk: any) => ({
-        title: chunk.web?.title || 'Resource',
-        uri: chunk.web?.uri
-      }))
-      .filter((s: any) => s.uri) || [];
-
-    return { ...pulseData, name: authorName, sources };
-  },
-
-  async checkAuthorReleases(authorName: string): Promise<any[]> {
-    const ai = getAIClient();
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
-      contents: PROMPTS.AUTHOR_RELEASES(authorName),
-      config: {
-        tools: [{ googleSearch: {} }],
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
+            bibliography: { type: Type.ARRAY, items: { type: Type.STRING } },
             releases: {
               type: Type.ARRAY,
               items: {
@@ -151,20 +153,32 @@ export const geminiService = {
       }
     });
 
+    let data: any = {};
     try {
-      const data = JSON.parse(response.text || '{}');
-      const now = new Date();
-      return (data.releases || []).map((r: any) => {
-        const releaseDate = new Date(r.releaseDate);
-        return {
-          ...r,
-          isUpcoming: releaseDate > now
-        };
-      });
+      data = JSON.parse(response.text || '{}');
     } catch (e) {
-      console.error("Failed to parse releases response", e);
-      return [];
+      console.warn("Unified Sync fallback parsing");
     }
+
+    const now = new Date();
+    const processedReleases = (data.releases || []).map((r: any) => ({
+      ...r,
+      isUpcoming: new Date(r.releaseDate) > now
+    }));
+
+    const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks
+      ?.map((chunk: any) => ({
+        title: chunk.web?.title || 'Resource',
+        uri: chunk.web?.uri
+      }))
+      .filter((s: any) => s.uri) || [];
+
+    return {
+      ...data,
+      releases: processedReleases,
+      sources,
+      name: authorName
+    };
   },
 
   async discoverBooks(currentTropes: string[], options: { canadianFocus: boolean }): Promise<any[]> {
@@ -172,7 +186,7 @@ export const geminiService = {
     const prompt = `Recommend 5 sapphic or queer books based on these interests: ${currentTropes.join(', ')}. ${options.canadianFocus ? "Prioritize Canadian authors." : ""} Return as JSON array of objects with 'title', 'author', 'reason'. Use Google Search to find current trending titles.`;
     
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview',
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],

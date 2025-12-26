@@ -1,32 +1,34 @@
 
 import React, { useState, useRef } from 'react';
 import { geminiService } from '../services/gemini';
+import { compressImage } from '../utils/image';
 
 interface ScannerProps {
   onBooksFound: (books: any[]) => void;
   onScanningStateChange: (scanning: boolean) => void;
+  onKeyError: () => void;
 }
 
-const Scanner: React.FC<ScannerProps> = ({ onBooksFound, onScanningStateChange }) => {
+const Scanner: React.FC<ScannerProps> = ({ onBooksFound, onScanningStateChange, onKeyError }) => {
   const [previews, setPreviews] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [errorStatus, setErrorStatus] = useState<'NONE' | 'KEY_REVOKED' | 'GENERAL'>('NONE');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  /**
-   * Reads multiple files concurrently and updates the preview state.
-   * Standard <input type="file" multiple> allows users to select from their gallery or take a photo.
-   */
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const filesList = e.target.files;
     if (!filesList || filesList.length === 0) return;
 
     const files = Array.from(filesList);
     
-    const readAsDataURL = (file: File): Promise<string> => {
+    const readAndCompress = async (file: File): Promise<string> => {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onloadend = () => {
-          if (typeof reader.result === 'string') resolve(reader.result);
+        reader.onloadend = async () => {
+          if (typeof reader.result === 'string') {
+            const compressed = await compressImage(reader.result, 0.7);
+            resolve(compressed);
+          }
           else reject(new Error("Failed to read file"));
         };
         reader.onerror = reject;
@@ -35,13 +37,13 @@ const Scanner: React.FC<ScannerProps> = ({ onBooksFound, onScanningStateChange }
     };
 
     try {
-      const newPreviews = await Promise.all(files.map(readAsDataURL));
+      const newPreviews = await Promise.all(files.map(readAndCompress));
       setPreviews(prev => [...prev, ...newPreviews]);
+      setErrorStatus('NONE');
     } catch (err) {
       console.error("Error reading shelf photos:", err);
     }
     
-    // Reset the input so the same file can be selected again if needed
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -51,27 +53,62 @@ const Scanner: React.FC<ScannerProps> = ({ onBooksFound, onScanningStateChange }
     if (previews.length === 0) return;
     setIsProcessing(true);
     onScanningStateChange(true);
+    setErrorStatus('NONE');
 
     try {
       const foundBooks = await geminiService.scanShelf(previews);
       onBooksFound(foundBooks);
       setPreviews([]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Scan failed", error);
-      alert("The archivist encountered an error during transcription. Please try again.");
+      if (error.message?.includes('403') || error.message?.includes('leaked')) {
+        setErrorStatus('KEY_REVOKED');
+        onKeyError();
+      } else {
+        setErrorStatus('GENERAL');
+      }
     } finally {
       setIsProcessing(false);
       onScanningStateChange(false);
     }
   };
 
+  const handleRotateKey = async () => {
+    if (typeof window.aistudio?.openSelectKey === 'function') {
+      await window.aistudio.openSelectKey();
+      setErrorStatus('NONE');
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <section className="bg-mica-surface border border-ink/5 p-8 rounded-3xl shadow-sm text-center">
+      <section className="bg-mica-surface border border-ink/5 p-8 rounded-3xl shadow-sm text-center relative overflow-hidden">
+        {errorStatus === 'KEY_REVOKED' && (
+          <div className="absolute inset-0 z-20 bg-rose/95 backdrop-blur-sm flex items-center justify-center p-8 animate-in fade-in duration-300">
+            <div className="space-y-4 max-w-sm text-parchment">
+              <h4 className="font-header text-2xl italic">Protocol Revoked</h4>
+              <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">
+                Your archival API key has been reported as leaked or is invalid.
+              </p>
+              <button 
+                onClick={handleRotateKey}
+                className="w-full py-3 bg-parchment text-rose rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white transition-all shadow-xl active:scale-95"
+              >
+                Rotate Archival Key
+              </button>
+              <button 
+                onClick={() => setErrorStatus('NONE')}
+                className="text-[9px] font-bold uppercase tracking-widest opacity-50 hover:opacity-100"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="font-header text-3xl mb-2 italic">Behold the shelves.</div>
         <p className="text-ink/60 text-sm mb-8 leading-relaxed">
-          Select one or more photos from your device or capture new ones. 
-          Gemini will meticulously analyze every spine to build your digital monograph.
+          Select photos of your collection. Gemini will meticulously analyze every spine to transform your physical library into a digital monograph.
         </p>
         
         <input 
@@ -95,7 +132,7 @@ const Scanner: React.FC<ScannerProps> = ({ onBooksFound, onScanningStateChange }
             <button 
               onClick={startScan}
               disabled={isProcessing}
-              className="w-full sm:w-auto px-8 py-4 bg-gold text-parchment rounded-2xl text-xs font-bold tracking-[0.2em] uppercase hover:bg-gold/90 disabled:bg-gold/30 transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-8 py-4 bg-brand-cyan text-brand-deep rounded-2xl text-xs font-bold tracking-[0.2em] uppercase hover:bg-brand-glow disabled:opacity-50 transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2"
             >
               {isProcessing ? (
                 <span className="animate-pulse">Consulting Scribes...</span>
@@ -118,7 +155,6 @@ const Scanner: React.FC<ScannerProps> = ({ onBooksFound, onScanningStateChange }
               >
                 ✕
               </button>
-              <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-ink/40 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
           ))}
         </div>
