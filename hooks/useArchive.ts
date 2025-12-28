@@ -49,10 +49,30 @@ export function useArchive() {
       scannedAt: new Date().toISOString()
     }));
 
-    setState(prev => ({
-      ...prev,
-      books: [...initializedBooks, ...prev.books]
-    }));
+    setState(prev => {
+      const updatedPulses = { ...prev.authorPulses };
+      
+      // Ensure every author is added to the pulse section immediately
+      initializedBooks.forEach(book => {
+        if (!updatedPulses[book.author]) {
+          updatedPulses[book.author] = {
+            name: book.author,
+            biography: 'Initiated...',
+            historicalContext: '',
+            bibliography: [],
+            sources: [],
+            lastChecked: undefined,
+            isFavorite: false
+          };
+        }
+      });
+
+      return {
+        ...prev,
+        books: [...initializedBooks, ...prev.books],
+        authorPulses: updatedPulses
+      };
+    });
 
     // Trigger auto-enrichment for covers and tropes
     if (state.settings.autoEnrich) {
@@ -149,6 +169,7 @@ export function useArchive() {
     updateBook,
     addBooks,
     updateAuthor,
+    enrichVolume,
     syncAuthorPulse,
     syncingAuthors,
     bulkUpdateAuthors,

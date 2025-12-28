@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Book } from '../types';
 
 interface BookCardProps {
@@ -10,6 +10,8 @@ interface BookCardProps {
 }
 
 const BookCard: React.FC<BookCardProps> = ({ book, onClick }) => {
+  const [imageErrorLevel, setImageErrorLevel] = useState(0);
+
   // Generate a random stable color for the CSS cover using the new palette
   const getCoverColor = (title: string) => {
     const colors = ['#011D4D', '#034078', '#1282A2', '#63372C', '#E4DFDA'];
@@ -17,7 +19,16 @@ const BookCard: React.FC<BookCardProps> = ({ book, onClick }) => {
     return colors[index];
   };
 
-  const coverBg = book.coverUrl ? 'transparent' : getCoverColor(book.title);
+  const currentCoverUrl = useMemo(() => {
+    if (imageErrorLevel === 0 && book.coverUrl) return book.coverUrl;
+    if (imageErrorLevel <= 1 && book.isbn) {
+      const cleanIsbn = book.isbn.replace(/[^0-9X]/gi, '');
+      return `https://covers.openlibrary.org/b/isbn/${cleanIsbn}-M.jpg`;
+    }
+    return null;
+  }, [book.coverUrl, book.isbn, imageErrorLevel]);
+
+  const coverBg = currentCoverUrl ? 'transparent' : getCoverColor(book.title);
   const textColor = coverBg === '#E4DFDA' ? '#011D4D' : 'white';
 
   return (
@@ -27,16 +38,21 @@ const BookCard: React.FC<BookCardProps> = ({ book, onClick }) => {
     >
       {/* CSS-Generated Book Cover */}
       <div 
-        className="book-thumb shrink-0" 
+        className="book-thumb shrink-0 bg-md-sys-surface overflow-hidden" 
         style={{ 
           backgroundColor: coverBg,
           color: textColor
         }}
       >
-        {book.coverUrl ? (
-          <img src={book.coverUrl} className="w-full h-full object-cover rounded-[2px]" alt="" />
+        {currentCoverUrl ? (
+          <img 
+            src={currentCoverUrl} 
+            className="w-full h-full object-cover rounded-[2px]" 
+            alt="" 
+            onError={() => setImageErrorLevel(prev => prev + 1)}
+          />
         ) : (
-          <span className="font-bold">{book.title}</span>
+          <span className="font-bold text-center px-1 break-words">{book.title}</span>
         )}
       </div>
 

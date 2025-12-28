@@ -123,6 +123,11 @@ const App: React.FC = () => {
     }
   };
 
+  const handleExport = () => {
+    persistenceService.exportArchive(state);
+    showToast("Exporting...");
+  };
+
   return (
     <Layout 
       activeTab={activeTab} 
@@ -130,6 +135,8 @@ const App: React.FC = () => {
       theme={state.theme}
       onToggleTheme={toggleTheme}
       onOpenSettings={() => handleTabChange(NavigationTab.SETTINGS)}
+      settings={state.settings}
+      onExport={handleExport}
     >
       <CommandPalette 
         isOpen={isPaletteOpen}
@@ -283,48 +290,16 @@ const App: React.FC = () => {
           )}
 
           {activeTab === NavigationTab.SETTINGS && (
-            <div className="space-y-6 p-4">
-              <div className="bg-md-sys-secondaryContainer p-6 rounded-[2.5rem] space-y-4 shadow-sm">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-md-sys-primary rounded-full flex items-center justify-center text-parchment text-2xl font-bold font-header italic border-2 border-parchment/20">
-                    S
-                  </div>
-                  <div>
-                    <h2 className="font-header text-2xl italic leading-tight text-parchment">Head Archivist</h2>
-                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 text-parchment">Archive Protocol v4.0.0</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-md-sys-outline ml-4 mb-2">Protocol Settings</h3>
-                <div className="space-y-2">
-                  <button onClick={toggleTheme} className="w-full flex items-center justify-between p-4 bg-parchment rounded-2xl border border-brand-deep/10">
-                    <span className="text-xs font-bold italic text-brand-deep">Theme: {state.theme.charAt(0).toUpperCase() + state.theme.slice(1)}</span>
-                    <span className="text-[10px] text-md-sys-primary font-black uppercase tracking-widest">Cycle</span>
-                  </button>
-                  <button className="w-full flex items-center justify-between p-4 bg-parchment rounded-2xl border border-brand-deep/10">
-                    <span className="text-xs font-bold italic text-brand-deep">Haptics Feedback</span>
-                    <div className={`w-8 h-4 rounded-full transition-colors ${state.settings.hapticsEnabled ? 'bg-md-sys-primary' : 'bg-brand-deep/10'}`} />
-                  </button>
-                  <button className="w-full flex items-center justify-between p-4 bg-parchment rounded-2xl border border-brand-deep/10">
-                    <span className="text-xs font-bold italic text-brand-deep">Canadian Author Priority</span>
-                    <div className={`w-8 h-4 rounded-full transition-colors ${state.settings.canadianFocus ? 'bg-md-sys-primary' : 'bg-brand-deep/10'}`} />
-                  </button>
-                </div>
-              </div>
-
-              <div className="pt-6 border-t border-brand-deep/5">
-                 <button 
-                  onClick={() => {
-                    persistenceService.exportArchive(state);
-                    showToast("Exporting...");
-                  }}
-                  className="w-full py-4 border-2 border-md-sys-primary text-md-sys-primary rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-sm active:scale-95 transition-all"
-                 >
-                   Export Local Monograph
-                 </button>
-              </div>
+            <div className="space-y-6 p-4 text-center py-20">
+               <div className="w-20 h-20 bg-brand-deep rounded-full flex items-center justify-center text-parchment font-header italic text-3xl mx-auto border-4 border-brand-cyan/20">A</div>
+               <h2 className="font-header text-3xl italic text-brand-deep mt-4">Archivist Protocols</h2>
+               <p className="text-xs text-ink/40 max-w-xs mx-auto">Access the side navigation drawer (top left) for full monograph settings and archival exports.</p>
+               <button 
+                 onClick={() => { haptics.trigger('medium'); setActiveTab(NavigationTab.LIBRARY); }}
+                 className="mt-8 px-8 py-3 bg-brand-deep text-parchment rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl"
+               >
+                 Return to Monograph
+               </button>
             </div>
           )}
         </>
