@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Book, Shelf } from '../types';
 import { geminiService } from '../services/gemini';
+import { useHaptics } from '../hooks/useHaptics';
 
 interface ShelfWithBooks extends Shelf {
   books: readonly Book[];
@@ -38,16 +39,23 @@ export function reconcileBooksToShelves(allBooks: Book[], allShelves: Shelf[]): 
 
 const BookItem: React.FC<{ book: Book; onClick: (b: Book) => void }> = ({ book, onClick }) => {
   const [imageError, setImageError] = useState(false);
+  const haptics = useHaptics();
+
+  const handleClick = () => {
+    haptics.trigger('light');
+    onClick(book);
+  };
 
   return (
     <div 
-      onClick={() => onClick(book)}
+      onClick={handleClick}
       className="group cursor-pointer perspective-1000"
     >
       <div className="relative w-full aspect-[2/3] transform-gpu transition-all duration-700 ease-out group-hover:rotate-y-12 group-hover:scale-105 group-hover:-translate-x-2">
         {/* Spine Side (3D Effect) */}
         <div className="absolute inset-y-0 -left-4 w-4 bg-brand-deep/80 origin-right transform rotate-y-90 z-0 shadow-2xl group-hover:bg-brand-deep transition-colors" />
         
+        {/* Front Cover */}
         <div className="w-full h-full bg-ink/5 rounded-r-md overflow-hidden border border-ink/10 archival-shadow relative z-10 bg-gradient-to-br from-white/10 to-transparent">
           {book.coverUrl && !imageError ? (
             <img 
@@ -65,6 +73,9 @@ const BookItem: React.FC<{ book: Book; onClick: (b: Book) => void }> = ({ book, 
           {/* Subtle paper texture overlay */}
           <div className="absolute inset-0 opacity-10 pointer-events-none mix-blend-multiply bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />
         </div>
+        
+        {/* Gloss Overlay */}
+        <div className="absolute inset-0 z-20 pointer-events-none opacity-0 group-hover:opacity-30 transition-opacity bg-gradient-to-tr from-transparent via-white to-transparent" />
       </div>
       <div className="mt-4 px-1 space-y-1">
         <h4 className="text-[11px] font-bold leading-tight group-hover:text-brand-cyan transition-colors line-clamp-2">{book.title}</h4>
@@ -78,6 +89,7 @@ const BeholdView: React.FC<{ books: Book[]; shelves: Shelf[]; onBookClick: (b: B
   const [loading, setLoading] = useState(true);
   const [curatorNotes, setCuratorNotes] = useState<Record<string, string>>({});
   const [isSynthesizing, setIsSynthesizing] = useState<string | null>(null);
+  const haptics = useHaptics();
 
   const reconciled = useMemo(() => reconcileBooksToShelves(books, shelves), [books, shelves]);
 
@@ -87,6 +99,7 @@ const BeholdView: React.FC<{ books: Book[]; shelves: Shelf[]; onBookClick: (b: B
   }, []);
 
   const handleSynthesize = async (shelfId: string, title: string, bookList: readonly Book[]) => {
+    haptics.trigger('medium');
     setIsSynthesizing(shelfId);
     try {
       const booksForPrompt = bookList.map(b => ({ title: b.title, author: b.author }));
@@ -144,17 +157,23 @@ const BeholdView: React.FC<{ books: Book[]; shelves: Shelf[]; onBookClick: (b: B
                 disabled={isSynthesizing === shelf.id}
                 className="text-[9px] font-black uppercase tracking-widest text-brand-cyan hover:text-brand-deep transition-all flex items-center gap-2 px-3 py-1 bg-brand-cyan/5 rounded-lg border border-brand-cyan/20"
               >
-                {isSynthesizing === shelf.id ? 'Synthesizing...' : curatorNotes[shelf.id] ? 'Re-Synthesize' : 'Consult Curator'}
+                {isSynthesizing === shelf.id ? (
+                  <div className="flex items-center gap-1">
+                    <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    Synthesizing...
+                  </div>
+                ) : curatorNotes[shelf.id] ? 'Re-Synthesize' : '✦ Consult Curator'}
               </button>
             </header>
 
             {curatorNotes[shelf.id] && (
-              <div className="bg-brand-deep text-parchment p-8 rounded-[2.5rem] shadow-2xl animate-in slide-in-from-top-4 duration-700 relative overflow-hidden group">
+              <div className="bg-brand-deep text-parchment p-8 rounded-[2.5rem] shadow-2xl animate-in slide-in-from-top-4 duration-700 relative overflow-hidden group border border-brand-cyan/20">
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                    <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L9 9L1 12L9 15L12 23L15 15L23 12L15 9L12 1Z"/></svg>
                 </div>
                 <h4 className="text-[8px] font-black uppercase tracking-[0.4em] mb-4 text-brand-cyan">Curator's Monograph Synthesis</h4>
                 <p className="font-header text-lg italic leading-relaxed opacity-90 whitespace-pre-wrap">{curatorNotes[shelf.id]}</p>
+                <div className="mt-4 w-8 h-[1px] bg-brand-cyan/30" />
               </div>
             )}
 
@@ -171,6 +190,7 @@ const BeholdView: React.FC<{ books: Book[]; shelves: Shelf[]; onBookClick: (b: B
         .perspective-1000 { perspective: 1000px; }
         .rotate-y-12 { transform: rotateY(-12deg); }
         .rotate-y-90 { transform: rotateY(90deg); }
+        .archival-shadow { box-shadow: 10px 10px 20px rgba(1, 29, 77, 0.1), -1px -1px 2px rgba(255, 255, 255, 0.5); }
       `}</style>
     </div>
   );

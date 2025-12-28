@@ -101,44 +101,6 @@ export const geminiService = {
     return { ...metadata, sourceUrls };
   },
 
-  /**
-   * Fetches book metadata from external IDs (Amazon, Goodreads, etc.)
-   * Uses search grounding to verify the volume against global literary databases.
-   */
-  async fetchByExternalId(type: string, id: string): Promise<any> {
-    const ai = getAIClient();
-    const prompt = `Research the book with ${type} ID: ${id}. 
-    Provide the title, author, ISBN-13, a 2-sentence synopsis, and 3-5 primary tropes. 
-    Focus on its significance in queer/sapphic literature. Use Google Search for accuracy. Return as JSON.`;
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: prompt,
-      config: {
-        tools: [{ googleSearch: {} }],
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            title: { type: Type.STRING },
-            author: { type: Type.STRING },
-            isbn: { type: Type.STRING },
-            synopsis: { type: Type.STRING },
-            tropes: { type: Type.ARRAY, items: { type: Type.STRING } }
-          },
-          required: ['title', 'author']
-        }
-      }
-    });
-
-    try {
-      return JSON.parse(response.text || '{}');
-    } catch (e) {
-      console.warn("External fetch fallback parsing");
-      return null;
-    }
-  },
-
   async summarizeShelf(shelfTitle: string, bookList: {title: string, author: string}[]): Promise<string> {
     const ai = getAIClient();
     const prompt = `You are a high-end curator of queer literature. Provide a beautiful, 2-paragraph "Curator's Note" for a shelf titled "${shelfTitle}" which contains: ${bookList.map(b => `"${b.title}" by ${b.author}`).join(', ')}. Analyze the hidden thematic connections and historical weight of this sub-collection. Use a sophisticated, archival tone.`;
@@ -147,7 +109,7 @@ export const geminiService = {
       model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
-        thinkingConfig: { thinkingBudget: 1000 }
+        thinkingConfig: { thinkingBudget: 1500 }
       }
     });
     return response.text || "Archival synthesis pending...";
@@ -179,10 +141,39 @@ export const geminiService = {
     }
   },
 
-  /**
-   * Scouts for new literary acquisitions based on a set of Lexicon signifiers.
-   * Leverages search grounding to find real-world books matching niche tropes.
-   */
+  async fetchByExternalId(type: string, id: string): Promise<any> {
+    const ai = getAIClient();
+    const prompt = `Research the book with ${type} ID: ${id}. 
+    Provide the title, author, ISBN-13, a 2-sentence synopsis, and 3-5 primary tropes. 
+    Focus on its significance in queer/sapphic literature. Use Google Search for accuracy. Return as JSON.`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: prompt,
+      config: {
+        tools: [{ googleSearch: {} }],
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            title: { type: Type.STRING },
+            author: { type: Type.STRING },
+            isbn: { type: Type.STRING },
+            synopsis: { type: Type.STRING },
+            tropes: { type: Type.ARRAY, items: { type: Type.STRING } }
+          },
+          required: ['title', 'author']
+        }
+      }
+    });
+
+    try {
+      return JSON.parse(response.text || '{}');
+    } catch (e) {
+      return null;
+    }
+  },
+
   async discoverBooks(tags: string[], options: { canadianFocus: boolean }): Promise<any[]> {
     const ai = getAIClient();
     const prompt = `Discover 5 niche sapphic/queer books that feature these tropes: ${tags.join(', ')}.
@@ -191,7 +182,7 @@ export const geminiService = {
     Use Google Search to find real, published books. Return as JSON.`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview',
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
@@ -220,7 +211,6 @@ export const geminiService = {
       const data = JSON.parse(response.text || '{"books": []}');
       return data.books || [];
     } catch (e) {
-      console.warn("Discovery fallback parsing");
       return [];
     }
   },
@@ -238,7 +228,7 @@ export const geminiService = {
       model: 'gemini-3-pro-preview',
       contents: prompt,
       config: {
-        thinkingConfig: { thinkingBudget: 4000 },
+        thinkingConfig: { thinkingBudget: 32768 },
         tools: [{ googleSearch: {} }],
         responseMimeType: 'application/json',
         responseSchema: {

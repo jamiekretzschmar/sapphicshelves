@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Book } from '../types';
 import { geminiService } from '../services/gemini';
+import { useHaptics } from '../hooks/useHaptics';
 
 interface BookDetailProps {
   book: Book;
@@ -28,10 +29,10 @@ const BookDetail: React.FC<BookDetailProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [imageErrorLevel, setImageErrorLevel] = useState(0);
   const [errorStatus, setErrorStatus] = useState<'NONE' | 'KEY_REVOKED'>('NONE');
+  const haptics = useHaptics();
   
   const [editSynopsis, setEditSynopsis] = useState(book.synopsis || '');
   const [editTropes, setEditTropes] = useState<string[]>(book.tropes || []);
-  const [newTrope, setNewTrope] = useState('');
 
   useEffect(() => {
     if (!book.coverUrl || !book.synopsis || !book.tropes?.length) {
@@ -44,6 +45,7 @@ const BookDetail: React.FC<BookDetailProps> = ({
     setIsEnriching(true);
     setErrorStatus('NONE');
     setImageErrorLevel(0);
+    haptics.trigger('medium');
     try {
       const enrichment = await geminiService.enrichBook(book.title, book.author);
       onUpdate({ 
@@ -80,7 +82,7 @@ const BookDetail: React.FC<BookDetailProps> = ({
 
       <div className="flex justify-between items-center relative z-10">
         <span className="text-[9px] font-black uppercase tracking-[0.4em] text-brand-cyan">Archival Folio Entry</span>
-        <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-ink/5 text-ink/40 hover:bg-brand-deep hover:text-parchment transition-all">✕</button>
+        <button onClick={() => { haptics.trigger('light'); onClose(); }} className="w-8 h-8 flex items-center justify-center rounded-full bg-ink/5 text-ink/40 hover:bg-brand-deep hover:text-parchment transition-all">✕</button>
       </div>
       
       <div className="flex gap-8 items-start relative z-10">
@@ -123,15 +125,24 @@ const BookDetail: React.FC<BookDetailProps> = ({
             disabled={isEnriching}
             className="flex-1 py-4 bg-brand-deep text-parchment rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] shadow-xl hover:bg-ink transition-all active:scale-95 disabled:opacity-50"
           >
-            {isEnriching ? 'Consulting Archive...' : '✦ Sync Metadata'}
+            {isEnriching ? (
+              <div className="flex items-center justify-center gap-2">
+                <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                Syncing...
+              </div>
+            ) : '✦ Sync Metadata'}
           </button>
           {isAuthorTracked ? (
             <button 
               onClick={() => onSyncAuthor(book.author)}
               disabled={isAuthorSyncing}
-              className="flex items-center gap-3 px-6 bg-brand-cyan/10 text-brand-cyan rounded-2xl border border-brand-cyan/20 text-[10px] font-black uppercase tracking-widest hover:bg-brand-cyan/20 transition-all"
+              className={`flex items-center gap-3 px-6 rounded-2xl border text-[10px] font-black uppercase tracking-widest transition-all ${
+                isAuthorSyncing 
+                ? 'bg-rose/10 border-rose/20 text-rose animate-pulse' 
+                : 'bg-brand-cyan/10 border-brand-cyan/20 text-brand-cyan hover:bg-brand-cyan/20'
+              }`}
             >
-              {isAuthorSyncing ? 'Syncing...' : 'Scribe Pulse'}
+              {isAuthorSyncing ? 'Pulse Active' : 'Scribe Pulse'}
             </button>
           ) : (
             <button 
@@ -163,7 +174,7 @@ const BookDetail: React.FC<BookDetailProps> = ({
 
         {book.sourceUrls && book.sourceUrls.length > 0 && (
           <div className="pt-8 border-t border-ink/5 space-y-4">
-            <h3 className="text-[9px] font-black uppercase tracking-[0.4em] text-ink/30">Archival Grounding</h3>
+            <h3 className="text-[9px] font-black uppercase tracking-[0.4em] text-ink/30">Archival Grounding Citations</h3>
             <div className="grid grid-cols-1 gap-2">
               {book.sourceUrls.map((source: any, i: number) => (
                 <a 
@@ -171,7 +182,7 @@ const BookDetail: React.FC<BookDetailProps> = ({
                   href={source.uri} 
                   target="_blank" 
                   rel="noopener" 
-                  className="flex items-center justify-between p-3 bg-ink/5 rounded-xl hover:bg-brand-cyan/10 hover:text-brand-cyan transition-all group"
+                  className="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-ink/5 hover:border-brand-cyan/20 hover:text-brand-cyan transition-all group shadow-sm"
                 >
                   <div className="flex items-center gap-3">
                     <svg className="w-4 h-4 opacity-30 group-hover:opacity-100" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
