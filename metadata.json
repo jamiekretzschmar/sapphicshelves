@@ -3,6 +3,7 @@
   "description": "A bespoke, AI-powered archival tool for queer literature using Gemini vision and reasoning models to transform physical collections into digital monographs.",
   "icon": "sapphic_logo.png",
   "requestFramePermissions": [
-    "camera"
+    "camera",
+    "microphone"
   ]
 }

@@ -80,6 +80,9 @@
       position: relative;
       display: flex;
       flex-direction: column;
+      /* Safe area insets support */
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
     }
 
     .status-bar {
@@ -123,6 +126,8 @@
       justify-content: space-around;
       border-top: 1px solid rgba(1, 29, 77, 0.1);
       z-index: 50;
+      /* Padding for home gesture indicator */
+      padding-bottom: env(safe-area-inset-bottom);
     }
 
     .nav-item {
@@ -161,7 +166,7 @@
 
     .fab {
       position: absolute;
-      bottom: 96px;
+      bottom: calc(96px + env(safe-area-inset-bottom));
       right: 16px;
       width: 56px;
       height: 56px;
