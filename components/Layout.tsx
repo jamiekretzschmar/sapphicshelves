@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { ICONS } from '../constants';
 import { NavigationTab, Theme } from '../types';
 import Logo from './Logo';
@@ -14,8 +14,11 @@ interface LayoutProps {
   settings: {
     canadianFocus: boolean;
     hapticsEnabled: boolean;
+    largeText: boolean;
   };
   onExport: () => void;
+  onImport: (file: File) => Promise<boolean>;
+  onReset: () => void;
 }
 
 const Layout: React.FC<LayoutProps> = ({ 
@@ -26,17 +29,42 @@ const Layout: React.FC<LayoutProps> = ({
   onToggleTheme, 
   onOpenSettings,
   settings,
-  onExport
+  onExport,
+  onImport,
+  onReset
 }) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleNav = (tab: NavigationTab) => {
     onTabChange(tab);
     setIsDrawerOpen(false);
   };
 
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+       const success = await onImport(e.target.files[0]);
+       if (success) {
+         setIsDrawerOpen(false);
+         alert("Archive Restored Successfully");
+       } else {
+         alert("Archive Restoration Failed");
+       }
+    }
+  };
+
+  const handleReset = () => {
+    if (confirm("WARNING: This will obliterate your entire archive. This action cannot be undone. Proceed?")) {
+      onReset();
+    }
+  };
+
   return (
-    <div className="android-device" data-theme={theme}>
+    <div className={`android-device ${settings.largeText ? 'text-lg' : ''}`} data-theme={theme}>
       <div className="status-bar">
         <span>12:45</span>
       </div>
@@ -120,15 +148,25 @@ const Layout: React.FC<LayoutProps> = ({
                   <span className="text-[10px] font-bold italic text-brand-deep">Cycle Theme</span>
                   <span className="text-[10px] text-brand-cyan">{theme.toUpperCase()}</span>
                 </button>
-                <div className="w-full flex items-center justify-between p-3 rounded-xl bg-black/5">
-                  <span className="text-[10px] font-bold italic text-brand-deep">Haptics</span>
-                  <div className={`w-6 h-3 rounded-full ${settings.hapticsEnabled ? 'bg-brand-cyan' : 'bg-black/10'}`} />
-                </div>
                 <button 
                   onClick={onExport}
-                  className="w-full py-3 border-2 border-brand-deep/10 text-brand-deep rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-brand-deep hover:text-parchment transition-all"
+                  className="w-full py-3 border border-brand-deep/10 text-brand-deep rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-brand-deep hover:text-parchment transition-all"
                 >
                   Export Archive
+                </button>
+                <button 
+                  onClick={handleImportClick}
+                  className="w-full py-3 border border-brand-deep/10 text-brand-deep rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-brand-deep hover:text-parchment transition-all"
+                >
+                  Import Archive
+                </button>
+                <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={handleFileChange} />
+                
+                <button 
+                  onClick={handleReset}
+                  className="w-full py-3 bg-rose/10 text-rose rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-rose hover:text-white transition-all mt-4"
+                >
+                  Nuke Protocol (Reset)
                 </button>
               </div>
             </div>
@@ -139,7 +177,7 @@ const Layout: React.FC<LayoutProps> = ({
                <div className="w-10 h-10 rounded-full bg-brand-deep flex items-center justify-center text-parchment font-header italic text-xl">A</div>
                <div>
                  <p className="text-[10px] font-black uppercase tracking-widest text-brand-deep">Head Archivist</p>
-                 <p className="text-[9px] italic text-ink/40">Protocol V4.0.0 Active</p>
+                 <p className="text-[9px] italic text-ink/40">Protocol V5.0.0 Active</p>
                </div>
              </div>
           </div>
@@ -170,7 +208,7 @@ const Layout: React.FC<LayoutProps> = ({
           {children}
         </div>
 
-        {activeTab !== NavigationTab.SCANNER && (
+        {activeTab !== NavigationTab.SCANNER && activeTab !== NavigationTab.LIBRARY && (
           <button 
             className="fab"
             onClick={() => onTabChange(NavigationTab.SCANNER)}

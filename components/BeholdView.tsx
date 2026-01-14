@@ -24,12 +24,13 @@ export function reconcileBooksToShelves(allBooks: Book[], allShelves: Shelf[]): 
     }
   });
 
-  const result = Array.from(shelfMap.values()).filter(s => s.books.length > 0);
-  if (orphans.length > 0 || (allShelves.length === 0 && allBooks.length > 0)) {
+  const result = Array.from(shelfMap.values());
+  // Always add orphans if they exist
+  if (orphans.length > 0) {
     result.push({
-      id: 'uncategorized-001',
-      title: 'Monograph Recovery',
-      description: 'Volumes synthesized via latent thematic clustering.',
+      id: 'uncategorized',
+      title: 'The Stack',
+      description: 'Unsorted Acquisitions',
       isVirtual: true,
       books: orphans
     });
@@ -52,10 +53,7 @@ const BookItem: React.FC<{ book: Book; onClick: (b: Book) => void }> = ({ book, 
       className="group cursor-pointer perspective-1000"
     >
       <div className="relative w-full aspect-[2/3] transform-gpu transition-all duration-700 ease-out group-hover:rotate-y-12 group-hover:scale-105 group-hover:-translate-x-2">
-        {/* Spine Side (3D Effect) */}
         <div className="absolute inset-y-0 -left-4 w-4 bg-brand-deep/80 origin-right transform rotate-y-90 z-0 shadow-2xl group-hover:bg-brand-deep transition-colors" />
-        
-        {/* Front Cover */}
         <div className="w-full h-full bg-ink/5 rounded-r-md overflow-hidden border border-ink/10 archival-shadow relative z-10 bg-gradient-to-br from-white/10 to-transparent">
           {book.coverUrl && !imageError ? (
             <img 
@@ -67,38 +65,38 @@ const BookItem: React.FC<{ book: Book; onClick: (b: Book) => void }> = ({ book, 
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-parchment">
                <span className="text-[9px] font-header italic text-ink/40 leading-tight line-clamp-3">{book.title}</span>
-               <div className="mt-2 w-4 h-[1px] bg-ink/10"></div>
             </div>
           )}
-          {/* Subtle paper texture overlay */}
-          <div className="absolute inset-0 opacity-10 pointer-events-none mix-blend-multiply bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />
+          {book.status === 'reading' && (
+             <div className="absolute top-2 right-2 w-2 h-2 bg-gold rounded-full shadow-[0_0_8px_rgba(18,130,162,0.8)] animate-pulse" />
+          )}
         </div>
-        
-        {/* Gloss Overlay */}
         <div className="absolute inset-0 z-20 pointer-events-none opacity-0 group-hover:opacity-30 transition-opacity bg-gradient-to-tr from-transparent via-white to-transparent" />
       </div>
       <div className="mt-4 px-1 space-y-1">
         <h4 className="text-[11px] font-bold leading-tight group-hover:text-brand-cyan transition-colors line-clamp-2">{book.title}</h4>
-        <p className="text-[9px] text-ink/40 italic font-medium truncate">{book.author}</p>
       </div>
     </div>
   );
 };
 
-const BeholdView: React.FC<{ books: Book[]; shelves: Shelf[]; onBookClick: (b: Book) => void }> = ({ books, shelves, onBookClick }) => {
-  const [loading, setLoading] = useState(true);
+const BeholdView: React.FC<{ 
+  books: Book[]; 
+  shelves: Shelf[]; 
+  onBookClick: (b: Book) => void;
+  onCreateShelf: (name: string) => void;
+  onDeleteShelf: (id: string) => void;
+}> = ({ books, shelves, onBookClick, onCreateShelf, onDeleteShelf }) => {
   const [curatorNotes, setCuratorNotes] = useState<Record<string, string>>({});
   const [isSynthesizing, setIsSynthesizing] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [newShelfName, setNewShelfName] = useState('');
   const haptics = useHaptics();
 
   const reconciled = useMemo(() => reconcileBooksToShelves(books, shelves), [books, shelves]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 800);
-    return () => clearTimeout(timer);
-  }, []);
-
   const handleSynthesize = async (shelfId: string, title: string, bookList: readonly Book[]) => {
+    if (bookList.length === 0) return;
     haptics.trigger('medium');
     setIsSynthesizing(shelfId);
     try {
@@ -112,68 +110,84 @@ const BeholdView: React.FC<{ books: Book[]; shelves: Shelf[]; onBookClick: (b: B
     }
   };
 
-  if (loading) {
-    return (
-      <div className="space-y-12 py-8 px-4">
-        {[1, 2].map(i => (
-          <div key={i} className="space-y-6 animate-pulse">
-            <div className="h-10 bg-ink/5 w-1/2 rounded-full" />
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-              {[1, 2, 3, 4].map(j => (
-                <div key={j} className="aspect-[2/3] bg-ink/5 rounded-xl" />
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
+  const handleCreate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newShelfName.trim()) {
+      onCreateShelf(newShelfName);
+      setNewShelfName('');
+      setIsCreating(false);
+    }
+  };
 
   return (
-    <div className="space-y-12 pb-24 px-4 animate-in fade-in duration-1000">
-      <header className="bg-mica-surface p-10 rounded-[3rem] archival-shadow border border-brand-cyan/10">
+    <div className="space-y-12 pb-32 px-4 animate-in fade-in duration-1000">
+      <header className="bg-mica-surface p-10 rounded-[3rem] archival-shadow border border-brand-cyan/10 flex flex-col md:flex-row justify-between items-end gap-6">
         <div className="space-y-3">
           <h2 className="font-header text-5xl italic tracking-tight text-brand-deep">Behold</h2>
           <p className="text-xs text-ink/50 italic leading-relaxed max-w-sm">
-            Forensic structural visualization of your monograph, mapped via latent cluster protocols.
+            Latent structural visualization.
           </p>
         </div>
+        
+        {isCreating ? (
+          <form onSubmit={handleCreate} className="flex gap-2 w-full md:w-auto">
+            <input 
+              autoFocus
+              placeholder="Shelf Name..."
+              className="bg-parchment px-4 py-2 rounded-xl text-sm border border-brand-deep/20 outline-none"
+              value={newShelfName}
+              onChange={e => setNewShelfName(e.target.value)}
+            />
+            <button type="submit" className="px-4 py-2 bg-brand-deep text-parchment rounded-xl text-xs font-bold uppercase">Add</button>
+            <button type="button" onClick={() => setIsCreating(false)} className="px-4 py-2 text-ink/50 text-xs font-bold uppercase">X</button>
+          </form>
+        ) : (
+          <button 
+            onClick={() => setIsCreating(true)}
+            className="px-6 py-3 bg-ink/5 hover:bg-brand-deep hover:text-parchment rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+          >
+            + Construct Shelf
+          </button>
+        )}
       </header>
 
       <div className="space-y-20">
         {reconciled.map((shelf) => (
           <section key={shelf.id} className="space-y-10">
-            <header className="flex items-end justify-between border-b border-ink/5 pb-4">
+            <header className="flex items-end justify-between border-b border-ink/5 pb-4 group">
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
                   <h3 className="font-header text-3xl italic text-brand-deep">{shelf.title}</h3>
-                  {shelf.isVirtual && <span className="text-[7px] font-black uppercase tracking-widest text-brand-cyan px-2 py-0.5 bg-brand-cyan/5 rounded-full border border-brand-cyan/10">Virtual Protocol</span>}
+                  <span className="text-[9px] font-mono text-ink/30">({shelf.books.length})</span>
                 </div>
                 {shelf.description && <p className="text-[9px] text-ink/30 uppercase tracking-[0.2em]">{shelf.description}</p>}
               </div>
               
-              <button 
-                onClick={() => handleSynthesize(shelf.id, shelf.title, shelf.books)}
-                disabled={isSynthesizing === shelf.id}
-                className="text-[9px] font-black uppercase tracking-widest text-brand-cyan hover:text-brand-deep transition-all flex items-center gap-2 px-3 py-1 bg-brand-cyan/5 rounded-lg border border-brand-cyan/20"
-              >
-                {isSynthesizing === shelf.id ? (
-                  <div className="flex items-center gap-1">
-                    <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                    Synthesizing...
-                  </div>
-                ) : curatorNotes[shelf.id] ? 'Re-Synthesize' : '✦ Consult Curator'}
-              </button>
+              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                 {!shelf.isVirtual && (
+                   <button 
+                     onClick={() => onDeleteShelf(shelf.id)}
+                     className="text-[9px] font-bold text-rose hover:underline uppercase tracking-widest px-3"
+                   >
+                     Dismantle
+                   </button>
+                 )}
+                 {shelf.books.length > 0 && (
+                   <button 
+                     onClick={() => handleSynthesize(shelf.id, shelf.title, shelf.books)}
+                     disabled={isSynthesizing === shelf.id}
+                     className="text-[9px] font-black uppercase tracking-widest text-brand-cyan hover:text-brand-deep transition-all px-3 py-1 bg-brand-cyan/5 rounded-lg"
+                   >
+                     {isSynthesizing === shelf.id ? 'Synthesizing...' : 'Consult Curator'}
+                   </button>
+                 )}
+              </div>
             </header>
 
             {curatorNotes[shelf.id] && (
               <div className="bg-brand-deep text-parchment p-8 rounded-[2.5rem] shadow-2xl animate-in slide-in-from-top-4 duration-700 relative overflow-hidden group border border-brand-cyan/20">
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                   <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L9 9L1 12L9 15L12 23L15 15L23 12L15 9L12 1Z"/></svg>
-                </div>
                 <h4 className="text-[8px] font-black uppercase tracking-[0.4em] mb-4 text-brand-cyan">Curator's Monograph Synthesis</h4>
                 <p className="font-header text-lg italic leading-relaxed opacity-90 whitespace-pre-wrap">{curatorNotes[shelf.id]}</p>
-                <div className="mt-4 w-8 h-[1px] bg-brand-cyan/30" />
               </div>
             )}
 
@@ -181,11 +195,16 @@ const BeholdView: React.FC<{ books: Book[]; shelves: Shelf[]; onBookClick: (b: B
               {shelf.books.map((book) => (
                 <BookItem key={book.id} book={book} onClick={onBookClick} />
               ))}
+              {shelf.books.length === 0 && (
+                <div className="col-span-full py-8 text-center border border-dashed border-ink/10 rounded-2xl opacity-40 text-xs italic">
+                  This shelf is currently vacant. Move volumes here from their folios.
+                </div>
+              )}
             </div>
           </section>
         ))}
       </div>
-
+      
       <style>{`
         .perspective-1000 { perspective: 1000px; }
         .rotate-y-12 { transform: rotateY(-12deg); }

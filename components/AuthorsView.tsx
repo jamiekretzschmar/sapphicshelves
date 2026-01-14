@@ -36,10 +36,13 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
   const [newAuthorName, setNewAuthorName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [expandedBios, setExpandedBios] = useState<Set<string>>(new Set());
+  
+  // New State for Sorting and Filtering
+  const [sortOrder, setSortOrder] = useState<'updated' | 'alpha'>('updated');
+  const [showFreshOnly, setShowFreshOnly] = useState(false);
 
   const authors = useMemo(() => Object.values(authorPulses) as AuthorPulse[], [authorPulses]);
 
-  // Fix: Explicitly type Sets and filter parameter to resolve 'Argument of type unknown is not assignable to string' error
   const potentialScribes = useMemo(() => {
     const libraryAuthors = new Set<string>(libraryBooks.map(b => b.author));
     const trackedAuthors = new Set<string>(Object.keys(authorPulses));
@@ -80,6 +83,8 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
 
   const filteredAuthors = useMemo(() => {
     let result = authors;
+    
+    // 1. Core Filtering
     if (authorFilter === 'favorites') {
       result = result.filter(a => a.isFavorite);
     }
@@ -91,8 +96,34 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
         a.bibliography?.some(b => isFuzzyMatch(b, query))
       );
     }
+
+    // 2. Fresh Intelligence Filter
+    if (showFreshOnly) {
+      const now = new Date();
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(now.getMonth() - 1);
+      
+      result = result.filter(a => a.releases?.some(r => {
+        const d = new Date(r.releaseDate);
+        return d > oneMonthAgo || r.isUpcoming;
+      }));
+    }
+
+    // 3. Sorting
+    result = [...result].sort((a, b) => {
+      if (sortOrder === 'alpha') {
+        return a.name.localeCompare(b.name);
+      } else {
+        // Default: Sort by favorites first, then by last updated/checked
+        if (a.isFavorite !== b.isFavorite) return a.isFavorite ? -1 : 1;
+        const dateA = a.lastChecked ? new Date(a.lastChecked).getTime() : 0;
+        const dateB = b.lastChecked ? new Date(b.lastChecked).getTime() : 0;
+        return dateB - dateA;
+      }
+    });
+
     return result;
-  }, [authors, authorFilter, authorSearchTerm]);
+  }, [authors, authorFilter, authorSearchTerm, sortOrder, showFreshOnly]);
 
   const recentReleases = useMemo(() => {
     return authors.flatMap(a => (a.releases || []).map(r => ({ ...r, author: a.name })))
@@ -104,9 +135,7 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
     return date.toLocaleDateString(undefined, { 
       year: 'numeric', 
       month: 'short', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      day: 'numeric'
     });
   };
 
@@ -202,11 +231,11 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
                   </div>
                   <div className="flex items-center gap-2">
                     {alert.isUpcoming ? (
-                      <span className="px-2 py-0.5 bg-gold/20 text-gold rounded-full font-bold uppercase text-[7px] tracking-widest">Future</span>
+                      <span className="px-2 py-0.5 bg-gold/20 text-gold rounded-full font-bold uppercase text-[7px] tracking-widest">Expected</span>
                     ) : (
                       <span className="px-2 py-0.5 bg-rose/20 text-rose rounded-full font-bold uppercase text-[7px] tracking-widest">Released</span>
                     )}
-                    <span className="opacity-40 font-mono text-[8px]">{alert.releaseDate}</span>
+                    <span className="opacity-40 font-mono text-[8px]">{formatDate(alert.releaseDate)}</span>
                   </div>
                 </div>
               ))}
@@ -234,18 +263,40 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
         </div>
         
         <div className="space-y-3">
-          <div className="relative group">
-            <input 
-              type="text"
-              placeholder="Fuzzy Search by scribe, movement, or bibliography..."
-              value={authorSearchTerm}
-              onChange={(e) => onSetAuthorSearchTerm(e.target.value)}
-              className="w-full bg-ink/5 border border-ink/5 px-5 py-3.5 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-rose/20 transition-all italic pr-12 font-light"
-            />
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-ink/20 group-focus-within:text-rose transition-colors">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+          <div className="flex flex-col md:flex-row gap-2">
+             <div className="relative group flex-1">
+              <input 
+                type="text"
+                placeholder="Search..."
+                value={authorSearchTerm}
+                onChange={(e) => onSetAuthorSearchTerm(e.target.value)}
+                className="w-full bg-ink/5 border border-ink/5 px-5 py-3.5 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-rose/20 transition-all italic pr-12 font-light"
+              />
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-ink/20 group-focus-within:text-rose transition-colors">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
+            
+            <div className="flex gap-2">
+               {/* Sort Toggle */}
+               <button 
+                 onClick={() => setSortOrder(prev => prev === 'alpha' ? 'updated' : 'alpha')}
+                 className="px-4 bg-ink/5 rounded-2xl text-[9px] font-bold uppercase tracking-widest text-ink/60 hover:bg-ink/10 transition-colors whitespace-nowrap"
+               >
+                 Sort: {sortOrder === 'alpha' ? 'A-Z' : 'Latest'}
+               </button>
+               
+               {/* Fresh Filter Toggle */}
+               <button 
+                 onClick={() => setShowFreshOnly(!showFreshOnly)}
+                 className={`px-4 rounded-2xl text-[9px] font-bold uppercase tracking-widest transition-colors whitespace-nowrap ${
+                   showFreshOnly ? 'bg-gold text-parchment' : 'bg-ink/5 text-ink/60 hover:bg-ink/10'
+                 }`}
+               >
+                 Fresh Only
+               </button>
             </div>
           </div>
 
@@ -387,7 +438,7 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
                 <div className="space-y-4 mb-8">
                   <h4 className="text-[9px] font-bold uppercase tracking-[0.3em] text-ink/30 border-b border-ink/5 pb-2">Archivist's Abstract</h4>
                   <div className="relative group">
-                    <p className={`text-sm italic leading-relaxed text-ink/70 transition-all ${isBioExpanded ? '' : 'line-clamp-4'}`}>
+                    <p className={`text-base leading-7 text-ink/90 transition-all ${isBioExpanded ? '' : 'line-clamp-4'}`}>
                       {author.biography}
                     </p>
                     <button 
@@ -396,7 +447,7 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
                         if (next.has(author.name)) next.delete(author.name); else next.add(author.name);
                         return next;
                       }); }}
-                      className="mt-2 text-[9px] font-bold uppercase tracking-widest text-plum hover:text-rose transition-colors flex items-center gap-1"
+                      className="mt-3 text-[9px] font-bold uppercase tracking-widest text-plum hover:text-rose transition-colors flex items-center gap-1"
                     >
                       {isBioExpanded ? 'Collapse Record' : 'Read Full Monograph'}
                     </button>
@@ -417,26 +468,38 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
                     {author.releases.map((rel, idx) => {
                       const status = bookStatuses[`${author.name}|${rel.title}`] || { read: false, wishlist: false };
                       return (
-                        <div key={idx} className="bg-sunset/5 border border-sunset/10 p-5 rounded-3xl flex justify-between items-center group/item hover:bg-sunset/10 transition-colors">
+                        <div key={idx} className="bg-sunset/5 border border-sunset/10 p-5 rounded-3xl flex justify-between items-start group/item hover:bg-sunset/10 transition-colors">
                           <div className="space-y-1 pr-4 flex-1">
                             <p className="text-sm font-bold italic text-ink/80">{rel.title}</p>
-                            <div className="flex items-center gap-3">
-                              <span className="text-[10px] font-mono text-sunset font-bold">{rel.releaseDate}</span>
-                              {rel.isUpcoming && (
-                                <span className="text-[7px] bg-sunset text-parchment px-2 py-0.5 rounded-full font-black uppercase tracking-tighter">Future Folio</span>
+                            
+                            <div className="flex items-center gap-3 mt-1">
+                              <span className="text-[10px] font-mono text-sunset font-bold">{formatDate(rel.releaseDate)}</span>
+                              {rel.isUpcoming ? (
+                                <span className="text-[7px] bg-gold text-parchment px-2 py-0.5 rounded-full font-black uppercase tracking-tighter shadow-sm">Expected</span>
+                              ) : (
+                                <span className="text-[7px] bg-emerald-600 text-parchment px-2 py-0.5 rounded-full font-black uppercase tracking-tighter shadow-sm opacity-60">Confirmed</span>
                               )}
                             </div>
+                            
+                            {rel.synopsis && (
+                               <p className="text-xs text-ink/60 mt-2 line-clamp-2 leading-relaxed italic border-l-2 border-sunset/20 pl-2">
+                                 {rel.synopsis}
+                               </p>
+                            )}
                           </div>
-                          <div className="flex gap-2">
+                          
+                          <div className="flex gap-2 shrink-0">
                              <button 
                               onClick={(e) => { e.stopPropagation(); onToggleBookStatus(author.name, rel.title, 'wishlist'); }} 
                               className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${status.wishlist ? 'bg-rose text-parchment shadow-md' : 'bg-ink/5 text-ink/20 hover:text-ink/40'}`}
+                              title="Add to Wishlist"
                              >
                                <svg className="w-4 h-4" fill={status.wishlist ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
                              </button>
                              <button 
                               onClick={(e) => { e.stopPropagation(); onToggleBookStatus(author.name, rel.title, 'read'); }} 
                               className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${status.read ? 'bg-emerald-500 text-parchment shadow-md' : 'bg-ink/5 text-ink/20 hover:text-ink/40'}`}
+                              title="Mark as Read"
                              >
                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                              </button>

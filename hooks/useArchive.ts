@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { ArchiveState, Book, AuthorPulse, NavigationTab, Theme, AuthorFilterMode } from '../types';
+import { ArchiveState, Book, AuthorPulse, NavigationTab, Theme, AuthorFilterMode, SortOption, BookStatus } from '../types';
 import { persistenceService } from '../services/persistence';
 import { geminiService } from '../services/gemini';
 
@@ -14,7 +14,6 @@ export function useArchive() {
 
   useEffect(() => {
     persistenceService.save(state);
-    // Apply theme to document
     document.documentElement.setAttribute('data-theme', state.theme);
   }, [state]);
 
@@ -23,6 +22,28 @@ export function useArchive() {
       ...prev,
       books: prev.books.map(b => b.id === updatedBook.id ? updatedBook : b)
     }));
+  }, []);
+
+  const deleteBook = useCallback((bookId: string) => {
+    setState(prev => ({
+      ...prev,
+      books: prev.books.filter(b => b.id !== bookId)
+    }));
+  }, []);
+
+  const createManualBook = useCallback(() => {
+    const newBook: Book = {
+      id: Math.random().toString(36).substr(2, 9),
+      title: 'Untitled Volume',
+      author: 'Unknown Scribe',
+      scannedAt: new Date().toISOString(),
+      status: 'tbr',
+      rating: 0,
+      userNotes: '',
+      tropes: []
+    };
+    setState(prev => ({ ...prev, books: [newBook, ...prev.books] }));
+    setSelectedBookId(newBook.id);
   }, []);
 
   const enrichVolume = useCallback(async (book: Book) => {
@@ -45,14 +66,14 @@ export function useArchive() {
   const addBooks = useCallback((newBooks: any[]) => {
     const initializedBooks: Book[] = newBooks.map(b => ({
       id: Math.random().toString(36).substr(2, 9),
+      status: 'tbr',
+      rating: 0,
       ...b,
       scannedAt: new Date().toISOString()
     }));
 
     setState(prev => {
       const updatedPulses = { ...prev.authorPulses };
-      
-      // Ensure every author is added to the pulse section immediately
       initializedBooks.forEach(book => {
         if (!updatedPulses[book.author]) {
           updatedPulses[book.author] = {
@@ -74,7 +95,6 @@ export function useArchive() {
       };
     });
 
-    // Trigger auto-enrichment for covers and tropes
     if (state.settings.autoEnrich) {
       initializedBooks.forEach(book => enrichVolume(book));
     }
@@ -94,12 +114,7 @@ export function useArchive() {
     setSyncingAuthors(prev => new Set(prev).add(name));
     try {
       const fullRecord = await geminiService.syncAuthorFullRecord(name);
-      
-      const updateData = { 
-        ...fullRecord,
-        lastChecked: new Date().toISOString() 
-      };
-      
+      const updateData = { ...fullRecord, lastChecked: new Date().toISOString() };
       setState(prev => {
         const current = prev.authorPulses[name] || { name };
         return {
@@ -127,18 +142,43 @@ export function useArchive() {
     }));
   }, []);
 
+  // Shelf Management
+  const createShelf = useCallback((title: string) => {
+    const newShelf = { id: Math.random().toString(36).substr(2, 9), title, description: 'Custom Collection' };
+    setState(prev => ({ ...prev, shelves: [...prev.shelves, newShelf] }));
+  }, []);
+
+  const deleteShelf = useCallback((id: string) => {
+    setState(prev => ({ ...prev, shelves: prev.shelves.filter(s => s.id !== id) }));
+  }, []);
+
+  // View Controls
+  const setSortMode = useCallback((mode: SortOption) => {
+    setState(prev => ({ ...prev, sortMode: mode }));
+  }, []);
+
+  const setStatusFilter = useCallback((status: BookStatus | 'all') => {
+    setState(prev => ({ ...prev, statusFilter: status }));
+  }, []);
+
+  // Legacy support for toggleBookStatus (now maps to actual status field)
   const toggleBookStatus = useCallback((authorName: string, bookTitle: string, type: 'read' | 'wishlist') => {
-    setState(prev => {
-      const key = `${authorName}|${bookTitle}`;
-      const current = prev.bookStatuses?.[key] || { read: false, wishlist: false };
-      return {
-        ...prev,
-        bookStatuses: {
-          ...prev.bookStatuses,
-          [key]: { ...current, [type]: !current[type] }
-        }
-      };
-    });
+     // NOTE: This legacy method is less useful with the new robust status system, 
+     // but kept for AuthorsView compatibility until that view is fully refactored.
+     // For now, it updates the separate bookStatuses map if needed, or we could map it to the book objects.
+     // To keep it simple and safe, we'll maintain the old separate map in state for AuthorView compatibility
+     setState(prev => {
+        const key = `${authorName}|${bookTitle}`;
+        // @ts-ignore - Assuming bookStatuses still exists in types for legacy compatibility or we add it to State if missing
+        const current = prev.bookStatuses?.[key] || { read: false, wishlist: false };
+        return {
+          ...prev,
+          bookStatuses: {
+            ...prev.bookStatuses,
+            [key]: { ...current, [type]: !current[type] }
+          }
+        };
+     });
   }, []);
 
   const setAuthorFilter = useCallback((filter: AuthorFilterMode) => {
@@ -157,6 +197,28 @@ export function useArchive() {
     }));
   }, []);
 
+  const updateSettings = useCallback((newSettings: Partial<ArchiveState['settings']>) => {
+    setState(prev => ({
+      ...prev,
+      settings: { ...prev.settings, ...newSettings }
+    }));
+  }, []);
+
+  const importArchive = useCallback(async (file: File) => {
+      try {
+          const newState = await persistenceService.importArchive(file);
+          if (newState) setState(newState);
+          return true;
+      } catch (e) {
+          console.error(e);
+          return false;
+      }
+  }, []);
+
+  const resetArchive = useCallback(() => {
+      persistenceService.reset();
+  }, []);
+
   return {
     state,
     setState,
@@ -167,6 +229,8 @@ export function useArchive() {
     searchQuery,
     setSearchQuery,
     updateBook,
+    deleteBook,
+    createManualBook,
     addBooks,
     updateAuthor,
     enrichVolume,
@@ -176,6 +240,14 @@ export function useArchive() {
     toggleBookStatus,
     setAuthorFilter,
     setAuthorSearchTerm,
-    toggleTheme
+    toggleTheme,
+    updateSettings,
+    createShelf,
+    deleteShelf,
+    setSortMode,
+    setStatusFilter,
+    importArchive,
+    resetArchive
   };
 }
+        

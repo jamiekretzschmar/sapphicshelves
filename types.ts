@@ -1,7 +1,8 @@
 
 export type Theme = 'light' | 'dark' | 'sepia';
 export type AuthorFilterMode = 'all' | 'favorites' | 'batch';
-export type BookStatus = 'DRAFT' | 'REVIEW_REQUIRED' | 'PUBLISHED';
+export type BookStatus = 'tbr' | 'reading' | 'read' | 'dnf';
+export type SortOption = 'date_desc' | 'date_asc' | 'title' | 'author' | 'rating';
 
 export type TagState = 'include' | 'exclude' | 'neutral';
 
@@ -19,12 +20,22 @@ export interface Book {
   isbn?: string;
   coverUrl?: string;
   tropes?: string[];
+  userTags?: string[]; // Manual tags
   synopsis?: string;
   scannedAt: string;
   shelfId?: string | null;
   isCanadian?: boolean;
+  
+  // Metacognition
+  status: BookStatus;
+  rating?: number; // 0-5
+  userNotes?: string;
+  startedAt?: string;
+  finishedAt?: string;
+  
   metadata?: {
     publisher?: string;
+    pageCount?: number;
   };
 }
 
@@ -65,14 +76,19 @@ export interface ArchiveState {
   books: Book[];
   shelves: Shelf[];
   authorPulses: Record<string, AuthorPulse>;
-  bookStatuses: Record<string, { read: boolean; wishlist: boolean }>;
   theme: Theme;
   authorFilter: AuthorFilterMode;
   authorSearchTerm: string;
+  
+  // View State Persistence
+  sortMode: SortOption;
+  statusFilter: BookStatus | 'all';
+
   settings: {
     canadianFocus: boolean;
     autoEnrich: boolean;
     hapticsEnabled: boolean;
+    largeText: boolean;
   };
 }
 

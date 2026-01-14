@@ -22,11 +22,38 @@ To provide queer readers with a bespoke, secure, and intelligent space to catalo
 - **Command Palette:** `⌘K` global navigation for power users.
 - **Themes:** Light, Dark, and a book-centric Sepia mode.
 
-## 📥 Installation
+## 📥 Installation (Desktop/Standard)
 1. `git clone https://github.com/your-user/sapphic-shelves.git`
 2. `npm install`
 3. Add your `API_KEY` to the environment.
 4. `npm run dev`
+
+## 📱 Android Installation (via Termux)
+Run Sapphic Shelves natively on your Android device using the Termux terminal emulator.
+
+1. **Install Termux:** Download the latest version from [F-Droid](https://f-droid.org/en/packages/com.termux/) (Do not use the Google Play Store version as it is deprecated).
+2. **Setup Environment:**
+   Open Termux and run:
+   ```bash
+   pkg update && pkg upgrade
+   pkg install git nodejs
+   ```
+3. **Clone & Install:**
+   ```bash
+   git clone https://github.com/your-repo/sapphic-shelves.git
+   cd sapphic-shelves
+   npm install
+   ```
+4. **Configure API Key:**
+   Create a local configuration file to store your credentials:
+   ```bash
+   echo "API_KEY=your_actual_gemini_api_key_here" > .env
+   ```
+5. **Launch Protocol:**
+   ```bash
+   npm run dev
+   ```
+6. **Access:** Open your mobile browser and navigate to `http://localhost:5173`.
 
 ## 🤝 Contributing
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.

@@ -1,50 +1,57 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Book } from '../types';
+import { Book, BookStatus, Shelf } from '../types';
 import { geminiService } from '../services/gemini';
 import { useHaptics } from '../hooks/useHaptics';
 
 interface BookDetailProps {
   book: Book;
+  shelves: Shelf[];
   isAuthorTracked: boolean;
   isAuthorSyncing: boolean;
   onTrackAuthor: (name: string) => void;
   onSyncAuthor: (name: string) => void;
   onUpdate: (book: Book) => void;
+  onDelete: (id: string) => void;
   onClose: () => void;
   onKeyError: () => void;
 }
 
 const BookDetail: React.FC<BookDetailProps> = ({ 
   book, 
+  shelves,
   isAuthorTracked, 
   isAuthorSyncing,
   onTrackAuthor, 
   onSyncAuthor,
   onUpdate, 
+  onDelete,
   onClose, 
   onKeyError 
 }) => {
   const [isEnriching, setIsEnriching] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [imageErrorLevel, setImageErrorLevel] = useState(0);
-  const [errorStatus, setErrorStatus] = useState<'NONE' | 'KEY_REVOKED'>('NONE');
+  const [editValues, setEditValues] = useState({ title: book.title, author: book.author });
   const haptics = useHaptics();
   
-  const [editSynopsis, setEditSynopsis] = useState(book.synopsis || '');
-  const [editTropes, setEditTropes] = useState<string[]>(book.tropes || []);
+  // Local state for auto-save fields
+  const [notes, setNotes] = useState(book.userNotes || '');
 
   useEffect(() => {
-    if (!book.coverUrl || !book.synopsis || !book.tropes?.length) {
-      enrichData();
-    }
+    setNotes(book.userNotes || '');
+    setEditValues({ title: book.title, author: book.author });
   }, [book.id]);
+
+  const handleSaveNotes = () => {
+    if (notes !== book.userNotes) {
+      onUpdate({ ...book, userNotes: notes });
+    }
+  };
 
   const enrichData = async () => {
     if (isEnriching) return;
     setIsEnriching(true);
-    setErrorStatus('NONE');
-    setImageErrorLevel(0);
     haptics.trigger('medium');
     try {
       const enrichment = await geminiService.enrichBook(book.title, book.author);
@@ -55,13 +62,24 @@ const BookDetail: React.FC<BookDetailProps> = ({
         tropes: Array.from(new Set([...(book.tropes || []), ...(enrichment.tropes || [])]))
       });
     } catch (error: any) {
-      console.error("Enrichment failed", error);
       if (error.message?.includes('403') || error.message?.includes('leaked')) {
-        setErrorStatus('KEY_REVOKED');
         onKeyError();
       }
     } finally {
       setIsEnriching(false);
+    }
+  };
+
+  const handleSaveMeta = () => {
+    onUpdate({ ...book, title: editValues.title, author: editValues.author });
+    setIsEditing(false);
+  };
+
+  const handleDelete = () => {
+    if (window.confirm("Are you sure you want to burn this volume from the archive?")) {
+      haptics.trigger('heavy');
+      onDelete(book.id);
+      onClose();
     }
   };
 
@@ -74,126 +92,172 @@ const BookDetail: React.FC<BookDetailProps> = ({
     return null;
   }, [book.coverUrl, book.isbn, imageErrorLevel]);
 
+  const statusColors: Record<BookStatus, string> = {
+    tbr: 'bg-ink/10 text-ink',
+    reading: 'bg-gold/20 text-gold',
+    read: 'bg-emerald-500/20 text-emerald-700',
+    dnf: 'bg-rose/10 text-rose'
+  };
+
+  const statusLabels: Record<BookStatus, string> = {
+    tbr: 'To Be Read',
+    reading: 'Currently Reading',
+    read: 'Finished',
+    dnf: 'Did Not Finish'
+  };
+
   return (
-    <div className="bg-parchment/95 backdrop-blur-xl border border-ink/10 rounded-[3rem] p-8 space-y-8 shadow-2xl relative animate-in zoom-in-95 duration-500 overflow-hidden">
-      <div className="absolute top-0 right-0 p-8 opacity-5">
-         <svg className="w-32 h-32" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L4.5 20.29L5.21 21L12 18L18.79 21L19.5 20.29L12 2Z"/></svg>
+    <div className="bg-parchment/95 backdrop-blur-xl border border-ink/10 rounded-[2rem] shadow-2xl relative animate-in zoom-in-95 duration-300 overflow-hidden flex flex-col max-h-[90vh]">
+      {/* Header */}
+      <div className="flex justify-between items-center p-6 border-b border-ink/5">
+        <span className="text-[9px] font-black uppercase tracking-[0.4em] text-brand-cyan">Archival Folio</span>
+        <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-ink/5 hover:bg-rose hover:text-white transition-all">✕</button>
       </div>
 
-      <div className="flex justify-between items-center relative z-10">
-        <span className="text-[9px] font-black uppercase tracking-[0.4em] text-brand-cyan">Archival Folio Entry</span>
-        <button onClick={() => { haptics.trigger('light'); onClose(); }} className="w-8 h-8 flex items-center justify-center rounded-full bg-ink/5 text-ink/40 hover:bg-brand-deep hover:text-parchment transition-all">✕</button>
-      </div>
-      
-      <div className="flex gap-8 items-start relative z-10">
-        <div className="w-36 h-52 bg-white rounded-xl shadow-2xl border border-ink/5 shrink-0 overflow-hidden relative group">
-          {currentCoverUrl ? (
-            <img 
-              src={currentCoverUrl} 
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-              alt={book.title} 
-              onError={() => setImageErrorLevel(prev => prev + 1)}
-            />
-          ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center italic bg-brand-deep/5">
-              <span className="text-[10px] text-ink/30">Cover Missing from Archive</span>
-            </div>
-          )}
-          {isEnriching && (
-            <div className="absolute inset-0 bg-brand-deep/40 backdrop-blur-sm flex items-center justify-center">
-               <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            </div>
-          )}
-        </div>
-        
-        <div className="flex-1 space-y-3">
-          <h2 className="font-header text-4xl leading-none text-brand-deep italic">{book.title}</h2>
-          <div className="flex items-center gap-3">
-            <p className="text-2xl font-header italic text-ink/70">by {book.author}</p>
-          </div>
-          <div className="flex flex-wrap gap-2 pt-2">
-            {book.isbn && <span className="text-[9px] font-mono px-2 py-1 bg-ink/5 rounded border border-ink/10 text-ink/60 uppercase">ISBN: {book.isbn}</span>}
-            {book.isCanadian && <span className="text-[9px] font-black px-2 py-1 bg-brand-cyan/10 text-brand-cyan rounded border border-brand-cyan/20 uppercase tracking-tighter">True North</span>}
-          </div>
-        </div>
-      </div>
+      <div className="flex-1 overflow-y-auto p-6 space-y-8">
+        <div className="flex flex-col md:flex-row gap-8">
+          {/* Cover & Actions */}
+          <div className="flex flex-col gap-4 w-full md:w-48 shrink-0">
+             <div className="aspect-[2/3] w-48 mx-auto bg-white rounded-lg shadow-xl border border-ink/5 overflow-hidden relative group">
+                {currentCoverUrl ? (
+                  <img 
+                    src={currentCoverUrl} 
+                    className="w-full h-full object-cover" 
+                    alt={book.title} 
+                    onError={() => setImageErrorLevel(prev => prev + 1)}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-brand-deep/5 p-4 text-center">
+                    <span className="text-[10px] text-ink/30 italic">No Cover</span>
+                  </div>
+                )}
+                {isEnriching && (
+                  <div className="absolute inset-0 bg-brand-deep/40 backdrop-blur-sm flex items-center justify-center">
+                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  </div>
+                )}
+             </div>
 
-      <div className="space-y-8 relative z-10">
-        <div className="flex gap-3">
-          <button 
-            onClick={enrichData}
-            disabled={isEnriching}
-            className="flex-1 py-4 bg-brand-deep text-parchment rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] shadow-xl hover:bg-ink transition-all active:scale-95 disabled:opacity-50"
-          >
-            {isEnriching ? (
-              <div className="flex items-center justify-center gap-2">
-                <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                Syncing...
-              </div>
-            ) : '✦ Sync Metadata'}
-          </button>
-          {isAuthorTracked ? (
-            <button 
-              onClick={() => onSyncAuthor(book.author)}
-              disabled={isAuthorSyncing}
-              className={`flex items-center gap-3 px-6 rounded-2xl border text-[10px] font-black uppercase tracking-widest transition-all ${
-                isAuthorSyncing 
-                ? 'bg-rose/10 border-rose/20 text-rose animate-pulse' 
-                : 'bg-brand-cyan/10 border-brand-cyan/20 text-brand-cyan hover:bg-brand-cyan/20'
-              }`}
-            >
-              {isAuthorSyncing ? 'Pulse Active' : 'Scribe Pulse'}
-            </button>
-          ) : (
-            <button 
-              onClick={() => onTrackAuthor(book.author)}
-              className="flex items-center gap-3 px-6 bg-plum/5 text-plum rounded-2xl border border-plum/20 text-[10px] font-black uppercase tracking-widest hover:bg-plum hover:text-white transition-all"
-            >
-              ✦ Track Scribe
-            </button>
-          )}
+             <select 
+               value={book.status}
+               onChange={(e) => onUpdate({ ...book, status: e.target.value as BookStatus })}
+               className={`w-full appearance-none text-center py-2 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer outline-none focus:ring-2 focus:ring-offset-2 ring-offset-parchment focus:ring-brand-cyan/50 ${statusColors[book.status]}`}
+             >
+               <option value="tbr">To Be Read</option>
+               <option value="reading">Reading</option>
+               <option value="read">Finished</option>
+               <option value="dnf">DNF</option>
+             </select>
+
+             <div className="flex justify-center gap-1">
+               {[1, 2, 3, 4, 5].map(star => (
+                 <button 
+                   key={star}
+                   onClick={() => onUpdate({ ...book, rating: star })}
+                   className={`text-2xl transition-all hover:scale-110 ${book.rating && book.rating >= star ? 'text-gold' : 'text-ink/10 hover:text-gold/50'}`}
+                 >
+                   ★
+                 </button>
+               ))}
+             </div>
+          </div>
+
+          {/* Metadata */}
+          <div className="flex-1 space-y-6">
+             {isEditing ? (
+               <div className="space-y-4 bg-white/50 p-4 rounded-2xl border border-ink/10">
+                 <input 
+                   className="w-full bg-transparent text-3xl font-header italic border-b border-ink/20 focus:border-brand-cyan outline-none"
+                   value={editValues.title}
+                   onChange={e => setEditValues({...editValues, title: e.target.value})}
+                 />
+                 <input 
+                   className="w-full bg-transparent text-xl font-header text-ink/70 border-b border-ink/20 focus:border-brand-cyan outline-none"
+                   value={editValues.author}
+                   onChange={e => setEditValues({...editValues, author: e.target.value})}
+                 />
+                 <div className="flex gap-2">
+                   <button onClick={handleSaveMeta} className="px-4 py-2 bg-brand-cyan text-white text-xs rounded-lg uppercase tracking-wider font-bold">Save</button>
+                   <button onClick={() => setIsEditing(false)} className="px-4 py-2 bg-ink/5 text-ink text-xs rounded-lg uppercase tracking-wider font-bold">Cancel</button>
+                 </div>
+               </div>
+             ) : (
+               <div className="group relative">
+                 <h2 className="font-header text-4xl leading-none text-brand-deep italic">{book.title}</h2>
+                 <p className="text-2xl font-header italic text-ink/70 mt-2">by {book.author}</p>
+                 <button onClick={() => setIsEditing(true)} className="absolute -right-2 top-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity text-ink/20 hover:text-brand-cyan">
+                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                 </button>
+               </div>
+             )}
+
+             {/* Shelf Mover */}
+             <div className="flex items-center gap-2">
+               <span className="text-[9px] font-bold uppercase tracking-widest text-ink/40">Location:</span>
+               <select 
+                 value={book.shelfId || ''}
+                 onChange={(e) => onUpdate({ ...book, shelfId: e.target.value || undefined })}
+                 className="bg-ink/5 border-none rounded-lg text-xs py-1 px-3 text-brand-deep font-bold cursor-pointer hover:bg-ink/10 outline-none"
+               >
+                 <option value="">Unsorted / Stack</option>
+                 {shelves.map(s => (
+                   <option key={s.id} value={s.id}>{s.title}</option>
+                 ))}
+               </select>
+             </div>
+
+             <div className="flex flex-wrap gap-2">
+               <button onClick={enrichData} disabled={isEnriching} className="px-4 py-2 bg-brand-deep text-parchment rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-ink">
+                 {isEnriching ? 'Syncing...' : '✦ Sync Metadata'}
+               </button>
+               {isAuthorTracked ? (
+                 <button onClick={() => onSyncAuthor(book.author)} disabled={isAuthorSyncing} className="px-4 py-2 bg-brand-cyan/10 text-brand-cyan border border-brand-cyan/20 rounded-xl text-[9px] font-black uppercase tracking-widest">
+                   {isAuthorSyncing ? 'Pulse Active' : 'Update Author'}
+                 </button>
+               ) : (
+                 <button onClick={() => onTrackAuthor(book.author)} className="px-4 py-2 bg-plum/10 text-plum border border-plum/20 rounded-xl text-[9px] font-black uppercase tracking-widest">
+                   Track Author
+                 </button>
+               )}
+             </div>
+
+             <div className="space-y-2">
+               <label className="text-[9px] font-black uppercase tracking-[0.3em] text-ink/30">Marginalia (Notes)</label>
+               <textarea 
+                 value={notes}
+                 onChange={(e) => setNotes(e.target.value)}
+                 onBlur={handleSaveNotes}
+                 placeholder="Add your personal observations..."
+                 className="w-full h-32 bg-white/40 border border-ink/10 rounded-xl p-4 text-sm italic focus:bg-white focus:ring-1 focus:ring-brand-cyan/30 outline-none transition-all resize-none"
+               />
+             </div>
+          </div>
         </div>
 
         {book.synopsis && (
-          <div className="space-y-3 bg-white/40 p-6 rounded-[2rem] border border-white">
-            <h3 className="text-[9px] font-black uppercase tracking-[0.4em] text-ink/30 mb-2">Thematic Abstract</h3>
-            <p className="text-base italic leading-relaxed text-ink/80">{book.synopsis}</p>
+          <div className="bg-white/40 p-6 rounded-2xl border border-white">
+            <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-ink/30 mb-2">Abstract</h3>
+            <p className="text-sm italic leading-relaxed text-ink/80">{book.synopsis}</p>
           </div>
         )}
+        
+        {book.tropes && (
+          <div className="flex flex-wrap gap-2">
+            {book.tropes.map(t => (
+              <span key={t} className="px-3 py-1 bg-white border border-ink/5 rounded-full text-[9px] font-bold text-ink/60">{t}</span>
+            ))}
+          </div>
+        )}
+      </div>
 
-        {book.tropes && book.tropes.length > 0 && (
-          <div className="space-y-4">
-            <h3 className="text-[9px] font-black uppercase tracking-[0.4em] text-ink/30">Literary Signifiers</h3>
-            <div className="flex flex-wrap gap-2">
-              {book.tropes.map(t => (
-                <span key={t} className="text-[10px] font-bold px-4 py-2 bg-white rounded-full border border-ink/5 shadow-sm text-brand-deep italic">{t}</span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {book.sourceUrls && book.sourceUrls.length > 0 && (
-          <div className="pt-8 border-t border-ink/5 space-y-4">
-            <h3 className="text-[9px] font-black uppercase tracking-[0.4em] text-ink/30">Archival Grounding Citations</h3>
-            <div className="grid grid-cols-1 gap-2">
-              {book.sourceUrls.map((source: any, i: number) => (
-                <a 
-                  key={i} 
-                  href={source.uri} 
-                  target="_blank" 
-                  rel="noopener" 
-                  className="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-ink/5 hover:border-brand-cyan/20 hover:text-brand-cyan transition-all group shadow-sm"
-                >
-                  <div className="flex items-center gap-3">
-                    <svg className="w-4 h-4 opacity-30 group-hover:opacity-100" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                    <span className="text-[10px] font-bold italic truncate max-w-[200px]">{source.title || new URL(source.uri).hostname}</span>
-                  </div>
-                  <span className="text-[8px] font-mono opacity-40 group-hover:opacity-100">{new URL(source.uri).hostname.replace('www.', '')}</span>
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
+      <div className="p-4 border-t border-ink/5 bg-mica-surface flex justify-between items-center">
+        <span className="text-[8px] font-mono text-ink/30">ID: {book.id}</span>
+        <button 
+          onClick={handleDelete}
+          className="px-4 py-2 text-rose hover:bg-rose/5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-colors"
+        >
+          Burn Volume
+        </button>
       </div>
     </div>
   );
