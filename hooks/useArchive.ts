@@ -140,6 +140,14 @@ export function useArchive() {
     });
   }, []);
 
+  const deleteAuthor = useCallback((name: string) => {
+    setState(prev => {
+      const newPulses = { ...prev.authorPulses };
+      delete newPulses[name];
+      return { ...prev, authorPulses: newPulses };
+    });
+  }, []);
+
   const syncAuthorPulse = useCallback(async (name: string) => {
     setSyncingAuthors(prev => new Set(prev).add(name));
     const taskId = startTask(`Researching ${name}`);
@@ -276,6 +284,7 @@ export function useArchive() {
     createManualBook,
     addBooks,
     updateAuthor,
+    deleteAuthor,
     enrichVolume,
     syncAuthorPulse,
     syncingAuthors,

@@ -17,6 +17,7 @@ interface ArchiveProps {
   onManualAdd: () => void;
   onBulkUpdate?: (bookIds: string[], updates: Partial<Book>) => void;
   onBulkDelete?: (bookIds: string[]) => void;
+  onUpdateBook?: (book: Book) => void;
 }
 
 const Archive: React.FC<ArchiveProps> = ({ 
@@ -31,7 +32,8 @@ const Archive: React.FC<ArchiveProps> = ({
   onFilterChange,
   onManualAdd,
   onBulkUpdate,
-  onBulkDelete
+  onBulkDelete,
+  onUpdateBook
 }) => {
   // Batch State
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -231,7 +233,9 @@ const Archive: React.FC<ArchiveProps> = ({
           <BookCard 
             key={book.id} 
             book={book} 
+            shelves={shelves}
             onClick={() => onBookClick(book)}
+            onUpdate={onUpdateBook}
             selectionMode={isSelectionMode}
             isSelected={selectedIds.has(book.id)}
             onToggleSelect={() => toggleSelection(book.id)}

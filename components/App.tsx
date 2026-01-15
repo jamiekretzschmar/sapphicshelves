@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { NavigationTab } from './types';
 import { useArchive } from './hooks/useArchive';
@@ -26,10 +27,12 @@ const App: React.FC = () => {
     searchQuery,
     setSearchQuery,
     updateBook,
+    bulkUpdateBooks,
     deleteBook,
     createManualBook,
     addBooks,
     updateAuthor,
+    deleteAuthor,
     syncAuthorPulse,
     syncingAuthors,
     activeTasks,
@@ -250,16 +253,26 @@ const App: React.FC = () => {
 
               <Archive 
                 books={filteredBooks} 
+                shelves={state.shelves}
                 sortMode={state.sortMode}
                 statusFilter={state.statusFilter}
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
                 onSortChange={setSortMode}
                 onFilterChange={setStatusFilter}
-                onBookClick={(b) => setSelectedBookId(b.id)} 
+                onBookClick={(b) => setSelectedBookId(b.id)}
+                onUpdateBook={updateBook}
                 onManualAdd={() => {
                    createManualBook();
                    showToast("Manual Folio Created");
+                }}
+                onBulkUpdate={(ids, updates) => {
+                  bulkUpdateBooks(ids, updates);
+                  showToast(`Updated ${ids.length} Volumes`);
+                }}
+                onBulkDelete={(ids) => {
+                  ids.forEach(id => deleteBook(id));
+                  showToast(`${ids.length} Volumes Burned`, "warning");
                 }}
               />
             </div>
@@ -333,6 +346,10 @@ const App: React.FC = () => {
                 onSetAuthorFilter={setAuthorFilter}
                 onSetAuthorSearchTerm={setAuthorSearchTerm}
                 onAddAuthor={handleAddAuthor}
+                onDeleteAuthor={(name) => {
+                  deleteAuthor(name);
+                  showToast("Scribe Untracked", "warning");
+                }}
                 libraryBooks={state.books}
               />
             </div>
