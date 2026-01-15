@@ -58,9 +58,9 @@ const Archive: React.FC<ArchiveProps> = ({
     }
     if (advFilters.year) {
       result = result.filter(b => {
-        if (!b.metadata?.publisher && !b.scannedAt) return false;
-        // Simple year check based on scan time or could be metadata if available
-        return b.scannedAt.startsWith(advFilters.year);
+        const year = b.publicationYear?.toString() || b.scannedAt?.substring(0, 4);
+        if (!year) return false;
+        return year.includes(advFilters.year);
       });
     }
 

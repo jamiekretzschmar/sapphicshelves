@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 import { PROMPTS } from '../constants';
 
@@ -73,8 +74,8 @@ export const geminiService = {
 
   async enrichBook(title: string, author: string): Promise<any> {
     const ai = getAIClient();
-    const prompt = `Find the ISBN-13, a 2-sentence synopsis, and 3-5 primary tropes for the book "${title}" by ${author}. 
-    Focus on its significance in queer/sapphic literature. 
+    const prompt = `Find the ISBN-13, the primary publication year (number), a 2-sentence synopsis, and 3-5 primary tropes for the book "${title}" by ${author}. 
+    Focus on its significance in queer/sapphic literature. Use Google Search to verify data.
     
     COVER IMAGE PROTOCOL:
     1. Find the accurate ISBN-13.
@@ -93,6 +94,7 @@ export const geminiService = {
             type: Type.OBJECT,
             properties: {
               isbn: { type: Type.STRING },
+              publicationYear: { type: Type.NUMBER },
               synopsis: { type: Type.STRING },
               coverUrl: { type: Type.STRING },
               tropes: { type: Type.ARRAY, items: { type: Type.STRING } }
@@ -101,7 +103,15 @@ export const geminiService = {
         }
       });
 
-      return cleanAndParseJSON(response.text);
+      const data = cleanAndParseJSON(response.text);
+      const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks
+        ?.map((chunk: any) => ({
+          title: chunk.web?.title || 'Resource',
+          uri: chunk.web?.uri
+        }))
+        .filter((s: any) => s.uri) || [];
+
+      return { ...data, sources };
     } catch (e) {
       console.error("Enrichment failed", e);
       return {};
@@ -114,10 +124,10 @@ export const geminiService = {
     
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview', // Using Flash for speed, or Pro if Thinking needed
+        model: 'gemini-3-flash-preview',
         contents: prompt,
         config: {
-          thinkingConfig: { thinkingBudget: 1024 } // Enable thinking for deeper analysis
+          thinkingConfig: { thinkingBudget: 1024 }
         }
       });
       return response.text || "Archival synthesis pending...";
@@ -155,7 +165,7 @@ export const geminiService = {
   async fetchByExternalId(type: string, id: string): Promise<any> {
     const ai = getAIClient();
     const prompt = `Research the book with ${type} ID: ${id}. 
-    Provide the title, author, ISBN-13, a 2-sentence synopsis, and 3-5 primary tropes. 
+    Provide the title, author, ISBN-13, publication year (number), a 2-sentence synopsis, and 3-5 primary tropes. 
     Focus on its significance in queer/sapphic literature. Use Google Search for accuracy. Return as JSON.`;
 
     try {
@@ -171,6 +181,7 @@ export const geminiService = {
               title: { type: Type.STRING },
               author: { type: Type.STRING },
               isbn: { type: Type.STRING },
+              publicationYear: { type: Type.NUMBER },
               synopsis: { type: Type.STRING },
               tropes: { type: Type.ARRAY, items: { type: Type.STRING } }
             },
@@ -179,7 +190,15 @@ export const geminiService = {
         }
       });
 
-      return cleanAndParseJSON(response.text);
+      const data = cleanAndParseJSON(response.text);
+      const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks
+        ?.map((chunk: any) => ({
+          title: chunk.web?.title || 'Resource',
+          uri: chunk.web?.uri
+        }))
+        .filter((s: any) => s.uri) || [];
+
+      return { ...data, sources };
     } catch (e) {
       return null;
     }
@@ -192,14 +211,13 @@ export const geminiService = {
     2. Context: Historical era/literary movement.
     3. Bibliography: List of their major books.
     4. Releases: Any books released in the last 60 days or announced for the future.
-    Use Google Search for ground truth. Use thinking for deep historical context. Return as a JSON object.`;
+    Use Google Search for ground truth. Return as a JSON object.`;
 
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
+        model: 'gemini-3-flash-preview',
         contents: prompt,
         config: {
-          thinkingConfig: { thinkingBudget: 4096 }, // Deep thinking for author analysis
           tools: [{ googleSearch: {} }],
           responseMimeType: 'application/json',
           responseSchema: {
@@ -249,7 +267,7 @@ export const geminiService = {
   async recommendBooksByTropes(included: string[], excluded: string[]): Promise<any[]> {
     const ai = getAIClient();
     const prompt = `Suggest 5 high-quality sapphic/queer books that match ALL of these tropes: [${included.join(', ')}] and explicitly DO NOT contain these tropes: [${excluded.join(', ')}].
-    For each book, provide the title, author, a very brief 1-sentence synopsis, and list the relevant tropes.
+    For each book, provide the title, author, publication year (number), a very brief 1-sentence synopsis, and list the relevant tropes.
     Use Google Search to find real, highly-rated books. Return as JSON.`;
 
     try {
@@ -269,6 +287,7 @@ export const geminiService = {
                   properties: {
                     title: { type: Type.STRING },
                     author: { type: Type.STRING },
+                    publicationYear: { type: Type.NUMBER },
                     synopsis: { type: Type.STRING },
                     tropes: { type: Type.ARRAY, items: { type: Type.STRING } }
                   },
