@@ -32,6 +32,7 @@ const App: React.FC = () => {
     createManualBook,
     addBooks,
     updateAuthor,
+    deleteAuthor,
     syncAuthorPulse,
     syncingAuthors,
     activeTasks,
@@ -205,7 +206,7 @@ const App: React.FC = () => {
       )}
 
       {selectedBookId && selectedBook ? (
-        <div className="fixed inset-0 bg-parchment z-[100] p-4 overflow-y-auto">
+        <div className="absolute inset-0 bg-parchment z-[100] p-4 overflow-y-auto">
           <BookDetail 
             book={selectedBook} 
             shelves={state.shelves}
@@ -259,7 +260,8 @@ const App: React.FC = () => {
                 onSearchChange={setSearchQuery}
                 onSortChange={setSortMode}
                 onFilterChange={setStatusFilter}
-                onBookClick={(b) => setSelectedBookId(b.id)} 
+                onBookClick={(b) => setSelectedBookId(b.id)}
+                onUpdateBook={updateBook}
                 onManualAdd={() => {
                    createManualBook();
                    showToast("Manual Folio Created");
@@ -324,6 +326,7 @@ const App: React.FC = () => {
                 }} 
                 onScanningStateChange={() => {}} 
                 onKeyError={() => showToast("Invalid Key", "error")}
+                existingBooks={state.books}
               />
             </div>
           )}
@@ -344,6 +347,10 @@ const App: React.FC = () => {
                 onSetAuthorFilter={setAuthorFilter}
                 onSetAuthorSearchTerm={setAuthorSearchTerm}
                 onAddAuthor={handleAddAuthor}
+                onDeleteAuthor={(name) => {
+                  deleteAuthor(name);
+                  showToast("Scribe Untracked", "warning");
+                }}
                 libraryBooks={state.books}
               />
             </div>

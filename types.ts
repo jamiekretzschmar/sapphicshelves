@@ -6,6 +6,17 @@ export type SortOption = 'date_desc' | 'date_asc' | 'title' | 'author' | 'rating
 
 export type TagState = 'include' | 'exclude' | 'neutral';
 
+// Global Window Extension for Project IDX / AI Studio
+declare global {
+  interface AIStudio {
+    openSelectKey: () => Promise<void>;
+    hasSelectedApiKey: () => Promise<boolean>;
+  }
+  interface Window {
+    aistudio?: AIStudio;
+  }
+}
+
 export interface Shelf {
   id: string;
   title: string;

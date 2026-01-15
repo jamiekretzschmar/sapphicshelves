@@ -37,9 +37,9 @@ export class CoverMatcher {
     };
 
     const titleScore = fuzzyMatch(local.title || '', remote.title || '') * 0.4;
-    // Fix: access author property correctly and check for common remote field names
-    const authorScore = fuzzyMatch(local.author || '', remote.authors?.[0] || remote.author || '') * 0.3;
-    // Fix: access metadata through optional chaining
+    // Check various common author fields in remote data (array vs string)
+    const remoteAuthor = Array.isArray(remote.authors) ? remote.authors[0] : (remote.author || '');
+    const authorScore = fuzzyMatch(local.author || '', remoteAuthor) * 0.3;
     const publisherScore = (local.metadata?.publisher === remote.publisher ? 100 : 0) * 0.3;
 
     return Math.min(100, Math.round(titleScore + authorScore + publisherScore));
