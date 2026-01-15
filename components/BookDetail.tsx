@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Book, BookStatus, Shelf } from '../types';
 import { geminiService } from '../services/gemini';
@@ -35,7 +34,6 @@ const BookDetail: React.FC<BookDetailProps> = ({
   const [editValues, setEditValues] = useState({ title: book.title, author: book.author });
   const haptics = useHaptics();
   
-  // Local state for auto-save fields
   const [notes, setNotes] = useState(book.userNotes || '');
 
   useEffect(() => {
@@ -99,22 +97,18 @@ const BookDetail: React.FC<BookDetailProps> = ({
     dnf: 'bg-rose/10 text-rose'
   };
 
-  const statusLabels: Record<BookStatus, string> = {
-    tbr: 'To Be Read',
-    reading: 'Currently Reading',
-    read: 'Finished',
-    dnf: 'Did Not Finish'
-  };
-
   return (
-    <div className="bg-parchment/95 backdrop-blur-xl border border-ink/10 rounded-[2rem] shadow-2xl relative animate-in zoom-in-95 duration-300 overflow-hidden flex flex-col max-h-[90vh]">
+    <div 
+      className="bg-parchment/95 backdrop-blur-xl border border-ink/10 rounded-[2rem] shadow-2xl relative animate-in zoom-in-95 duration-300 overflow-hidden flex flex-col max-h-[90vh] w-full max-w-2xl mx-auto"
+      style={{ overscrollBehavior: 'contain' }}
+    >
       {/* Header */}
-      <div className="flex justify-between items-center p-6 border-b border-ink/5">
+      <div className="flex justify-between items-center p-6 border-b border-ink/5 shrink-0">
         <span className="text-[9px] font-black uppercase tracking-[0.4em] text-brand-cyan">Archival Folio</span>
         <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-ink/5 hover:bg-rose hover:text-white transition-all">✕</button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-8">
+      <div className="flex-1 overflow-y-auto p-6 space-y-8 overscroll-contain">
         <div className="flex flex-col md:flex-row gap-8">
           {/* Cover & Actions */}
           <div className="flex flex-col gap-4 w-full md:w-48 shrink-0">
@@ -250,7 +244,7 @@ const BookDetail: React.FC<BookDetailProps> = ({
         )}
       </div>
 
-      <div className="p-4 border-t border-ink/5 bg-mica-surface flex justify-between items-center">
+      <div className="p-4 border-t border-ink/5 bg-mica-surface flex justify-between items-center shrink-0">
         <span className="text-[8px] font-mono text-ink/30">ID: {book.id}</span>
         <button 
           onClick={handleDelete}

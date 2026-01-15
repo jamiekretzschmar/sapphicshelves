@@ -238,5 +238,47 @@ export const geminiService = {
       console.error("Author Sync Failed", e);
       throw e;
     }
+  },
+
+  async recommendBooksByTropes(included: string[], excluded: string[]): Promise<any[]> {
+    const ai = getAIClient();
+    const prompt = `Suggest 5 high-quality sapphic/queer books that match ALL of these tropes: [${included.join(', ')}] and explicitly DO NOT contain these tropes: [${excluded.join(', ')}].
+    For each book, provide the title, author, a very brief 1-sentence synopsis, and list the relevant tropes.
+    Use Google Search to find real, highly-rated books. Return as JSON.`;
+
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: prompt,
+        config: {
+          tools: [{ googleSearch: {} }],
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              recommendations: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    title: { type: Type.STRING },
+                    author: { type: Type.STRING },
+                    synopsis: { type: Type.STRING },
+                    tropes: { type: Type.ARRAY, items: { type: Type.STRING } }
+                  },
+                  required: ['title', 'author']
+                }
+              }
+            }
+          }
+        }
+      });
+      
+      const data = JSON.parse(response.text || '{}');
+      return data.recommendations || [];
+    } catch (e) {
+      console.error("Book recommendation failed", e);
+      return [];
+    }
   }
 };

@@ -7,6 +7,8 @@ interface ArchiveProps {
   books: Book[];
   sortMode: SortOption;
   statusFilter: BookStatus | 'all';
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
   onBookClick: (book: Book) => void;
   onSortChange: (mode: SortOption) => void;
   onFilterChange: (status: BookStatus | 'all') => void;
@@ -17,12 +19,14 @@ const Archive: React.FC<ArchiveProps> = ({
   books, 
   sortMode,
   statusFilter,
+  searchQuery = '',
+  onSearchChange,
   onBookClick,
   onSortChange,
   onFilterChange,
   onManualAdd
 }) => {
-  if (books.length === 0 && statusFilter === 'all') {
+  if (books.length === 0 && statusFilter === 'all' && !searchQuery) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-8 animate-fade-in">
         <div className="w-24 h-24 bg-ink/5 rounded-full flex items-center justify-center mb-6 border-2 border-dashed border-ink/10">
@@ -45,19 +49,29 @@ const Archive: React.FC<ArchiveProps> = ({
   }
 
   return (
-    <div className="animate-fade-in pb-24">
+    <div className="animate-fade-in">
       <div className="px-4 py-4">
         <TropeAnalytics books={books} />
       </div>
 
-      {/* Sticky Filter Bar */}
-      <div className="sticky top-0 z-30 -mx-2 px-6 py-3 bg-parchment/95 backdrop-blur-xl border-b border-ink/5 shadow-sm mb-4 transition-all">
-        <div className="flex items-center justify-between mb-3">
+      {/* Sticky Filter & Search Bar */}
+      <div className="sticky top-0 z-30 -mx-2 px-6 py-4 bg-parchment/95 backdrop-blur-xl border-b border-ink/5 shadow-sm mb-4 transition-all flex flex-col gap-3">
+        <div className="flex items-center justify-between">
            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-ink/40">Active Filter Protocol</h2>
            <button onClick={onManualAdd} className="text-[10px] font-bold uppercase tracking-widest text-brand-cyan hover:text-brand-deep">
              + Add Entry
            </button>
         </div>
+
+        {onSearchChange && (
+          <input 
+            type="text"
+            placeholder="Search Monograph..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="w-full bg-ink/5 border border-ink/5 px-4 py-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-brand-cyan/20 transition-all italic placeholder:text-ink/30"
+          />
+        )}
         
         <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1 snap-x">
            {/* Sort Chip */}
@@ -107,7 +121,7 @@ const Archive: React.FC<ArchiveProps> = ({
           <div className="py-20 text-center flex flex-col items-center opacity-50">
              <span className="text-4xl mb-2">🧐</span>
              <p className="text-xs font-bold uppercase tracking-widest text-ink/60">No matching volumes found.</p>
-             <button onClick={() => onFilterChange('all')} className="mt-4 text-xs text-brand-cyan underline">Clear Filters</button>
+             <button onClick={() => { onFilterChange('all'); if(onSearchChange) onSearchChange(''); }} className="mt-4 text-xs text-brand-cyan underline">Clear Filters</button>
           </div>
         )}
       </div>

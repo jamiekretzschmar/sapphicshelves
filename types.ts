@@ -71,11 +71,17 @@ export interface Opportunity {
   validity_score?: number;
 }
 
+export interface SystemTask {
+  id: string;
+  label: string;
+}
+
 export interface ArchiveState {
   version: string;
   books: Book[];
   shelves: Shelf[];
   authorPulses: Record<string, AuthorPulse>;
+  lexiconFavorites: string[]; // User defined trope favorites
   theme: Theme;
   authorFilter: AuthorFilterMode;
   authorSearchTerm: string;

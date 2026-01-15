@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { ICONS } from '../constants';
-import { NavigationTab, Theme } from '../types';
+import { NavigationTab, Theme, SystemTask } from '../types';
 import Logo from './Logo';
 
 interface LayoutProps {
@@ -18,6 +18,7 @@ interface LayoutProps {
   onExport: () => void;
   onImport: (file: File) => Promise<boolean>;
   onReset: () => void;
+  activeTasks?: SystemTask[];
 }
 
 const Layout: React.FC<LayoutProps> = ({ 
@@ -30,7 +31,8 @@ const Layout: React.FC<LayoutProps> = ({
   settings,
   onExport,
   onImport,
-  onReset
+  onReset,
+  activeTasks = []
 }) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -59,20 +61,36 @@ const Layout: React.FC<LayoutProps> = ({
     }
   };
 
+  const activeTaskLabel = activeTasks.length > 0 ? activeTasks[activeTasks.length - 1].label : null;
+
   return (
     <div className={`android-device ${settings.largeText ? 'text-lg' : ''}`} data-theme={theme}>
-      <div className="status-bar flex justify-between items-center px-4 pt-1 opacity-50 text-[10px] font-mono">
+      {/* Fake Status Bar - Hidden on Mobile */}
+      <div className="hidden md:flex status-bar justify-between items-center px-4 pt-1 opacity-50 text-[10px] font-mono select-none">
         <span>SAPPHIC.OS</span>
         <span>100%</span>
       </div>
       
-      <div className="screen">
+      <div className="screen" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         {/* Navigation Scrim */}
         {isDrawerOpen && (
           <div 
             className="absolute inset-0 bg-ink/30 backdrop-blur-sm z-[190] animate-fade-in"
             onClick={() => setIsDrawerOpen(false)}
           />
+        )}
+
+        {/* Global Task Indicator - Non-blocking Signifier */}
+        {activeTaskLabel && (
+           <div className="absolute top-16 right-4 left-4 z-[180] pointer-events-none flex justify-center animate-in fade-in slide-in-from-top-2 duration-300">
+             <div className="bg-ink/90 backdrop-blur-md text-parchment px-4 py-2 rounded-full flex items-center gap-3 shadow-xl border border-parchment/10">
+               <div className="relative w-3 h-3">
+                 <span className="absolute inset-0 rounded-full bg-brand-cyan/50 animate-ping"></span>
+                 <span className="absolute inset-0 rounded-full bg-brand-cyan border border-parchment/20"></span>
+               </div>
+               <span className="text-[10px] font-black uppercase tracking-widest">{activeTaskLabel}</span>
+             </div>
+           </div>
         )}
 
         {/* The Archivist's Cloister (Drawer) */}
@@ -159,7 +177,7 @@ const Layout: React.FC<LayoutProps> = ({
           </div>
         </aside>
 
-        <header className="h-16 flex items-center justify-between px-4 bg-parchment/90 backdrop-blur-md sticky top-0 z-40 border-b border-ink/5">
+        <header className="h-14 flex items-center justify-between px-4 bg-parchment/90 backdrop-blur-md sticky top-0 z-40 border-b border-ink/5 select-none">
           <div className="flex items-center gap-3">
             <button 
               onClick={() => setIsDrawerOpen(true)}

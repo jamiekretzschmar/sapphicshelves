@@ -20,6 +20,7 @@ export const persistenceService = {
       books: [],
       shelves: [],
       authorPulses: {},
+      lexiconFavorites: [],
       theme: 'light',
       authorFilter: 'all',
       authorSearchTerm: '',
@@ -55,6 +56,7 @@ export const persistenceService = {
           ...defaults, 
           ...parsed, 
           books: migratedBooks,
+          lexiconFavorites: parsed.lexiconFavorites || [],
           version: CURRENT_VERSION 
         };
       }

@@ -93,7 +93,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, onClick }) => {
 
           {/* Trope Pills (Limit 1) */}
           {book.tropes && book.tropes.length > 0 && (
-             <span className="text-[8px] px-2 py-1 bg-ink/5 text-ink/50 rounded-full font-bold uppercase tracking-wide truncate max-w-[100px]">
+             <span className="text-[8px] px-2 py-1 bg-ink/5 text-ink/50 rounded-full font-bold uppercase tracking-wide truncate max-w-[150px]">
                {book.tropes[0]}
              </span>
           )}

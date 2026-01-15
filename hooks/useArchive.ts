@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { ArchiveState, Book, AuthorPulse, NavigationTab, Theme, AuthorFilterMode, SortOption, BookStatus } from '../types';
+import { ArchiveState, Book, AuthorPulse, NavigationTab, Theme, AuthorFilterMode, SortOption, BookStatus, SystemTask } from '../types';
 import { persistenceService } from '../services/persistence';
 import { geminiService } from '../services/gemini';
 
@@ -10,12 +10,23 @@ export function useArchive() {
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [syncingAuthors, setSyncingAuthors] = useState<Set<string>>(new Set());
+  const [activeTasks, setActiveTasks] = useState<SystemTask[]>([]);
   const enrichmentQueue = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     persistenceService.save(state);
     document.documentElement.setAttribute('data-theme', state.theme);
   }, [state]);
+
+  const startTask = useCallback((label: string) => {
+    const id = Math.random().toString(36).substr(2, 9);
+    setActiveTasks(prev => [...prev, { id, label }]);
+    return id;
+  }, []);
+
+  const endTask = useCallback((id: string) => {
+    setActiveTasks(prev => prev.filter(t => t.id !== id));
+  }, []);
 
   const updateBook = useCallback((updatedBook: Book) => {
     setState(prev => ({
@@ -49,6 +60,7 @@ export function useArchive() {
   const enrichVolume = useCallback(async (book: Book) => {
     if (enrichmentQueue.current.has(book.id)) return;
     enrichmentQueue.current.add(book.id);
+    const taskId = startTask(`Enriching ${book.title}`);
     
     try {
       const enrichment = await geminiService.enrichBook(book.title, book.author);
@@ -60,8 +72,9 @@ export function useArchive() {
       console.error(`Failed to enrich volume ${book.title}:`, e);
     } finally {
       enrichmentQueue.current.delete(book.id);
+      endTask(taskId);
     }
-  }, []);
+  }, [startTask, endTask]);
 
   const addBooks = useCallback((newBooks: any[]) => {
     const initializedBooks: Book[] = newBooks.map(b => ({
@@ -112,6 +125,7 @@ export function useArchive() {
 
   const syncAuthorPulse = useCallback(async (name: string) => {
     setSyncingAuthors(prev => new Set(prev).add(name));
+    const taskId = startTask(`Researching ${name}`);
     try {
       const fullRecord = await geminiService.syncAuthorFullRecord(name);
       const updateData = { ...fullRecord, lastChecked: new Date().toISOString() };
@@ -132,8 +146,9 @@ export function useArchive() {
         next.delete(name);
         return next;
       });
+      endTask(taskId);
     }
-  }, []);
+  }, [startTask, endTask]);
 
   const bulkUpdateAuthors = useCallback((newPulses: Record<string, AuthorPulse>) => {
     setState(prev => ({
@@ -161,19 +176,16 @@ export function useArchive() {
     setState(prev => ({ ...prev, statusFilter: status }));
   }, []);
 
-  // Legacy support for toggleBookStatus (now maps to actual status field)
+  // Legacy support for toggleBookStatus
   const toggleBookStatus = useCallback((authorName: string, bookTitle: string, type: 'read' | 'wishlist') => {
-     // NOTE: This legacy method is less useful with the new robust status system, 
-     // but kept for AuthorsView compatibility until that view is fully refactored.
-     // For now, it updates the separate bookStatuses map if needed, or we could map it to the book objects.
-     // To keep it simple and safe, we'll maintain the old separate map in state for AuthorView compatibility
      setState(prev => {
         const key = `${authorName}|${bookTitle}`;
-        // @ts-ignore - Assuming bookStatuses still exists in types for legacy compatibility or we add it to State if missing
+        // @ts-ignore
         const current = prev.bookStatuses?.[key] || { read: false, wishlist: false };
         return {
           ...prev,
           bookStatuses: {
+            // @ts-ignore
             ...prev.bookStatuses,
             [key]: { ...current, [type]: !current[type] }
           }
@@ -219,6 +231,21 @@ export function useArchive() {
       persistenceService.reset();
   }, []);
 
+  // Lexicon Favorites Logic
+  const addLexiconFavorite = useCallback((tag: string) => {
+    setState(prev => {
+        if (prev.lexiconFavorites.includes(tag)) return prev;
+        return { ...prev, lexiconFavorites: [...prev.lexiconFavorites, tag] };
+    });
+  }, []);
+
+  const removeLexiconFavorite = useCallback((tag: string) => {
+    setState(prev => ({
+        ...prev,
+        lexiconFavorites: prev.lexiconFavorites.filter(t => t !== tag)
+    }));
+  }, []);
+
   return {
     state,
     setState,
@@ -236,6 +263,9 @@ export function useArchive() {
     enrichVolume,
     syncAuthorPulse,
     syncingAuthors,
+    activeTasks, // Expose active tasks
+    startTask,   // Expose for manual task tracking
+    endTask,     // Expose for manual task tracking
     bulkUpdateAuthors,
     toggleBookStatus,
     setAuthorFilter,
@@ -247,7 +277,8 @@ export function useArchive() {
     setSortMode,
     setStatusFilter,
     importArchive,
-    resetArchive
+    resetArchive,
+    addLexiconFavorite,
+    removeLexiconFavorite
   };
 }
-        
