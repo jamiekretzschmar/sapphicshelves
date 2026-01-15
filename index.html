@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Sapphic Shelves | Android Archive</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,46 +10,86 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400;1,600&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
   <script>
     tailwind.config = {
+      darkMode: ['class', '[data-theme="dark"]'],
       theme: {
         extend: {
           colors: {
-            md: {
-              sys: {
-                primary: '#034078',
-                onPrimary: '#FFFFFF',
-                surface: '#E4DFDA',
-                onSurface: '#011D4D',
-                secondaryContainer: '#1282A2',
-                onSecondaryContainer: '#FFFFFF',
-                outline: '#63372C',
-              }
-            },
-            parchment: '#E4DFDA',
+            // Dynamic Semantic Colors (RGB based for opacity support)
+            parchment: 'rgb(var(--rgb-parchment) / <alpha-value>)',
+            ink: 'rgb(var(--rgb-ink) / <alpha-value>)',
+            'mica-surface': 'rgb(var(--rgb-mica) / <alpha-value>)',
+            
+            // Branding & Accents
             brand: {
               deep: '#011D4D',
               cyan: '#1282A2',
+              glow: '#4A9EA6',
             },
             plum: '#63372C',
-            rose: '#034078',
+            rose: '#D1345B', // Tuned for better contrast
+            gold: '#C5A028',
+            sunset: '#9A463D',
+            
+            // Material System Mapping
+            md: {
+              sys: {
+                primary: 'rgb(var(--rgb-primary) / <alpha-value>)',
+                onPrimary: '#FFFFFF',
+                surface: 'rgb(var(--rgb-parchment) / <alpha-value>)',
+                onSurface: 'rgb(var(--rgb-ink) / <alpha-value>)',
+                secondaryContainer: '#1282A2',
+                onSecondaryContainer: '#FFFFFF',
+                outline: 'rgb(var(--rgb-ink) / 0.6)',
+              }
+            }
           },
           fontFamily: {
             header: ['Cormorant Garamond', 'serif'],
-            sans: ['system-ui', '-apple-system', 'Roboto', 'sans-serif'],
+            sans: ['Instrument Sans', 'sans-serif'],
           },
+          fontSize: {
+            // Optical adjustment for small screens
+            'xxs': '0.7rem',
+            'xs': '0.85rem',
+            'sm': '0.95rem', 
+            'base': '1.05rem',
+            'lg': '1.15rem',
+            'xl': '1.35rem',
+            '2xl': '1.75rem',
+            '3xl': '2.15rem',
+            '4xl': '2.75rem',
+          }
         }
       }
     };
   </script>
   <style>
     :root {
-      --bg-color: #E4DFDA;
-      --text-color: #011D4D;
-      --md-primary: #034078;
-      --md-surface: #E4DFDA;
+      /* LIGHT THEME (Default) */
+      --rgb-parchment: 228 223 218; /* #E4DFDA */
+      --rgb-ink: 1 29 77;          /* #011D4D */
+      --rgb-mica: 245 242 240;     /* #F5F2F0 */
+      --rgb-primary: 3 64 120;     /* #034078 */
+    }
+
+    [data-theme="dark"] {
+      /* DARK THEME (Deep Blue High Contrast) */
+      --rgb-parchment: 1 15 40;    /* Very Dark Blue for BG */
+      --rgb-ink: 235 230 225;      /* High bright parchment for Text */
+      --rgb-mica: 10 35 70;        /* Slightly lighter blue for cards */
+      --rgb-primary: 100 181 246;  /* Light Blue */
+    }
+
+    [data-theme="sepia"] {
+      /* SEPIA THEME (Serious Archival) */
+      --rgb-parchment: 238 232 213; /* Solarized Base2 */
+      --rgb-ink: 67 52 34;          /* Dark Coffee */
+      --rgb-mica: 253 246 227;      /* Solarized Base3 */
+      --rgb-primary: 160 82 45;     /* Sienna */
     }
     
     body {
-      background-color: #d1cbc5;
+      background-color: #555;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -59,43 +98,50 @@
       font-family: 'Instrument Sans', sans-serif;
     }
 
-    /* The Android Chassis */
     .android-device {
       width: 360px;
       height: 800px;
-      background: #011D4D;
-      border: 12px solid #011D4D;
+      background: rgb(var(--rgb-ink)); /* Chassis color matches ink (dark bezel) */
+      border: 12px solid rgb(var(--rgb-ink));
       border-radius: 36px;
-      box-shadow: 0 25px 50px -12px rgba(0, 29, 77, 0.5);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
       overflow: hidden;
       position: relative;
       display: flex;
       flex-direction: column;
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+    
+    [data-theme="light"] .android-device {
+        border-color: #011D4D;
     }
 
     .screen {
       flex: 1;
-      background: var(--md-surface);
+      background-color: rgb(var(--rgb-parchment));
+      color: rgb(var(--rgb-ink));
       overflow: hidden;
       position: relative;
       display: flex;
       flex-direction: column;
-      /* Safe area insets support */
+      transition: background-color 0.3s, color 0.3s;
       padding-top: env(safe-area-inset-top);
       padding-bottom: env(safe-area-inset-bottom);
     }
 
     .status-bar {
       height: 24px;
-      background: var(--md-surface);
+      background: rgb(var(--rgb-parchment));
       display: flex;
       align-items: center;
       justify-content: flex-end;
       padding: 0 16px;
-      font-size: 10px;
-      font-weight: bold;
-      color: #011D4D;
+      font-size: 11px;
+      font-weight: 800;
+      color: rgb(var(--rgb-ink));
+      opacity: 0.8;
       z-index: 100;
+      transition: background-color 0.3s, color 0.3s;
     }
 
     .scroll-container {
@@ -109,25 +155,26 @@
     }
 
     .top-app-bar {
-      height: 56px;
+      height: 64px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0 16px;
-      background: var(--md-surface);
+      background: rgb(var(--rgb-parchment));
       z-index: 50;
+      transition: background-color 0.3s;
     }
 
     .bottom-nav {
       height: 80px;
-      background: #E4DFDA;
+      background: rgb(var(--rgb-parchment));
       display: flex;
       align-items: center;
       justify-content: space-around;
-      border-top: 1px solid rgba(1, 29, 77, 0.1);
+      border-top: 1px solid rgba(var(--rgb-ink), 0.1);
       z-index: 50;
-      /* Padding for home gesture indicator */
       padding-bottom: env(safe-area-inset-bottom);
+      transition: background-color 0.3s, border-color 0.3s;
     }
 
     .nav-item {
@@ -135,7 +182,7 @@
       flex-direction: column;
       align-items: center;
       gap: 4px;
-      color: #034078;
+      color: rgb(var(--rgb-primary));
       flex: 1;
       cursor: pointer;
       position: relative;
@@ -147,18 +194,18 @@
     }
 
     .nav-item.active .nav-icon-bg {
-      background: #1282A2;
-      color: #FFFFFF;
+      background: rgb(var(--rgb-primary));
+      color: rgb(var(--rgb-parchment));
     }
 
     .nav-icon-bg {
-      padding: 4px 20px;
+      padding: 6px 20px;
       border-radius: 16px;
       transition: all 0.2s ease;
     }
 
     .nav-label {
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
@@ -168,20 +215,20 @@
       position: absolute;
       bottom: calc(96px + env(safe-area-inset-bottom));
       right: 16px;
-      width: 56px;
-      height: 56px;
-      border-radius: 16px;
-      background: var(--md-primary);
-      color: white;
+      width: 64px;
+      height: 64px;
+      border-radius: 20px;
+      background: rgb(var(--rgb-primary));
+      color: rgb(var(--rgb-parchment));
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 12px rgba(3, 64, 120, 0.4);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
       z-index: 60;
       transition: transform 0.2s;
     }
     .fab:active {
-      transform: scale(0.9);
+      transform: scale(0.95);
     }
 
     .ripple {
@@ -197,7 +244,7 @@
       top: 0;
       left: 0;
       pointer-events: none;
-      background-image: radial-gradient(circle, #011D4D 10%, transparent 10.01%);
+      background-image: radial-gradient(circle, rgb(var(--rgb-ink)) 10%, transparent 10.01%);
       background-repeat: no-repeat;
       background-position: 50%;
       transform: scale(10, 10);
@@ -210,45 +257,21 @@
       transition: 0s;
     }
 
-    /* CSS Book Cover Generator */
     .book-thumb {
-      width: 48px;
-      height: 72px;
-      border-radius: 4px;
+      width: 56px;
+      height: 84px;
+      border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 4px;
+      padding: 6px;
       text-align: center;
       font-family: 'Cormorant Garamond', serif;
       font-style: italic;
       color: white;
-      font-size: 6px;
+      font-size: 9px;
       line-height: 1.1;
-      box-shadow: 2px 2px 5px rgba(1, 29, 77, 0.2);
-    }
-
-    [data-theme="dark"] .android-device {
-      border-color: #000;
-      background: #000;
-    }
-    [data-theme="dark"] .screen {
-      background: #011D4D;
-      color: #E4DFDA;
-    }
-    [data-theme="dark"] .status-bar {
-      background: #011D4D;
-      color: white;
-    }
-    [data-theme="dark"] .top-app-bar {
-      background: #011D4D;
-    }
-    [data-theme="dark"] .bottom-nav {
-      background: #011D4D;
-      border-top-color: rgba(228, 223, 218, 0.1);
-    }
-    [data-theme="dark"] .nav-item {
-      color: #1282A2;
+      box-shadow: 2px 2px 5px rgba(0,0,0, 0.2);
     }
   </style>
 <script type="importmap">

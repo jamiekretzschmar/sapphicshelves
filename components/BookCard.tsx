@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Book } from '../types';
 
@@ -34,14 +33,16 @@ const BookCard: React.FC<BookCardProps> = ({ book, onClick }) => {
   return (
     <div 
       onClick={onClick}
-      className="flex flex-row items-center p-3 gap-4 hover:bg-black/5 active:bg-black/10 transition-colors ripple border-b border-black/5 last:border-0"
+      className="flex flex-row items-center p-4 gap-5 hover:bg-black/5 active:bg-black/10 transition-colors ripple border-b border-black/5 last:border-0"
     >
       {/* CSS-Generated Book Cover */}
       <div 
-        className="book-thumb shrink-0 bg-md-sys-surface overflow-hidden" 
+        className="book-thumb shrink-0 bg-md-sys-surface overflow-hidden shadow-sm" 
         style={{ 
           backgroundColor: coverBg,
-          color: textColor
+          color: textColor,
+          width: '56px',
+          height: '84px'
         }}
       >
         {currentCoverUrl ? (
@@ -52,31 +53,31 @@ const BookCard: React.FC<BookCardProps> = ({ book, onClick }) => {
             onError={() => setImageErrorLevel(prev => prev + 1)}
           />
         ) : (
-          <span className="font-bold text-center px-1 break-words">{book.title}</span>
+          <span className="font-bold text-center px-1 break-words text-[10px]">{book.title}</span>
         )}
       </div>
 
-      <div className="flex-1 min-w-0">
-        <h3 className="text-[14px] font-bold text-md-sys-onSurface truncate leading-tight">
+      <div className="flex-1 min-w-0 space-y-1">
+        <h3 className="text-base font-bold text-md-sys-onSurface truncate leading-tight">
           {book.title}
         </h3>
-        <p className="text-[12px] text-md-sys-outline truncate font-medium">
+        <p className="text-sm text-md-sys-outline truncate font-medium">
           {book.author}
         </p>
-        <div className="flex gap-1 mt-1">
+        <div className="flex flex-wrap gap-1.5 mt-1">
           {book.isCanadian && (
-            <span className="text-[8px] font-bold text-md-sys-primary bg-md-sys-secondaryContainer px-1 rounded">True North</span>
+            <span className="text-[10px] font-bold text-md-sys-primary bg-md-sys-secondaryContainer/20 border border-md-sys-secondaryContainer/20 px-2 py-0.5 rounded">True North</span>
           )}
           {book.tropes && book.tropes.slice(0, 1).map(t => (
-            <span key={t} className="text-[8px] font-bold text-md-sys-onSecondaryContainer bg-md-sys-secondaryContainer px-1 rounded truncate">
+            <span key={t} className="text-[10px] font-bold text-md-sys-onSecondaryContainer bg-md-sys-secondaryContainer px-2 py-0.5 rounded truncate">
               {t}
             </span>
           ))}
         </div>
       </div>
 
-      <div className="shrink-0 text-md-sys-primary opacity-30">
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="shrink-0 text-md-sys-primary opacity-40">
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
       </div>

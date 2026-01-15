@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Book, Shelf } from '../types';
 import { geminiService } from '../services/gemini';
@@ -64,7 +63,7 @@ const BookItem: React.FC<{ book: Book; onClick: (b: Book) => void }> = ({ book, 
             />
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-parchment">
-               <span className="text-[9px] font-header italic text-ink/40 leading-tight line-clamp-3">{book.title}</span>
+               <span className="text-[10px] font-header italic text-ink/60 leading-tight line-clamp-3">{book.title}</span>
             </div>
           )}
           {book.status === 'reading' && (
@@ -74,7 +73,7 @@ const BookItem: React.FC<{ book: Book; onClick: (b: Book) => void }> = ({ book, 
         <div className="absolute inset-0 z-20 pointer-events-none opacity-0 group-hover:opacity-30 transition-opacity bg-gradient-to-tr from-transparent via-white to-transparent" />
       </div>
       <div className="mt-4 px-1 space-y-1">
-        <h4 className="text-[11px] font-bold leading-tight group-hover:text-brand-cyan transition-colors line-clamp-2">{book.title}</h4>
+        <h4 className="text-xs font-bold leading-tight group-hover:text-brand-cyan transition-colors line-clamp-2">{book.title}</h4>
       </div>
     </div>
   );
@@ -124,7 +123,7 @@ const BeholdView: React.FC<{
       <header className="bg-mica-surface p-10 rounded-[3rem] archival-shadow border border-brand-cyan/10 flex flex-col md:flex-row justify-between items-end gap-6">
         <div className="space-y-3">
           <h2 className="font-header text-5xl italic tracking-tight text-brand-deep">Behold</h2>
-          <p className="text-xs text-ink/50 italic leading-relaxed max-w-sm">
+          <p className="text-sm text-ink/70 italic leading-relaxed max-w-sm">
             Latent structural visualization.
           </p>
         </div>
@@ -134,17 +133,17 @@ const BeholdView: React.FC<{
             <input 
               autoFocus
               placeholder="Shelf Name..."
-              className="bg-parchment px-4 py-2 rounded-xl text-sm border border-brand-deep/20 outline-none"
+              className="bg-parchment px-4 py-3 rounded-xl text-sm border border-brand-deep/20 outline-none w-full"
               value={newShelfName}
               onChange={e => setNewShelfName(e.target.value)}
             />
-            <button type="submit" className="px-4 py-2 bg-brand-deep text-parchment rounded-xl text-xs font-bold uppercase">Add</button>
-            <button type="button" onClick={() => setIsCreating(false)} className="px-4 py-2 text-ink/50 text-xs font-bold uppercase">X</button>
+            <button type="submit" className="px-5 py-3 bg-brand-deep text-parchment rounded-xl text-xs font-bold uppercase">Add</button>
+            <button type="button" onClick={() => setIsCreating(false)} className="px-5 py-3 text-ink/50 text-xs font-bold uppercase">X</button>
           </form>
         ) : (
           <button 
             onClick={() => setIsCreating(true)}
-            className="px-6 py-3 bg-ink/5 hover:bg-brand-deep hover:text-parchment rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+            className="px-8 py-4 bg-ink/5 hover:bg-brand-deep hover:text-parchment rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
           >
             + Construct Shelf
           </button>
@@ -157,17 +156,17 @@ const BeholdView: React.FC<{
             <header className="flex items-end justify-between border-b border-ink/5 pb-4 group">
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
-                  <h3 className="font-header text-3xl italic text-brand-deep">{shelf.title}</h3>
-                  <span className="text-[9px] font-mono text-ink/30">({shelf.books.length})</span>
+                  <h3 className="font-header text-4xl italic text-brand-deep">{shelf.title}</h3>
+                  <span className="text-xs font-mono text-ink/40">({shelf.books.length})</span>
                 </div>
-                {shelf.description && <p className="text-[9px] text-ink/30 uppercase tracking-[0.2em]">{shelf.description}</p>}
+                {shelf.description && <p className="text-xs text-ink/60 uppercase tracking-[0.2em]">{shelf.description}</p>}
               </div>
               
               <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                  {!shelf.isVirtual && (
                    <button 
                      onClick={() => onDeleteShelf(shelf.id)}
-                     className="text-[9px] font-bold text-rose hover:underline uppercase tracking-widest px-3"
+                     className="text-xs font-bold text-rose hover:underline uppercase tracking-widest px-4 py-2"
                    >
                      Dismantle
                    </button>
@@ -176,7 +175,7 @@ const BeholdView: React.FC<{
                    <button 
                      onClick={() => handleSynthesize(shelf.id, shelf.title, shelf.books)}
                      disabled={isSynthesizing === shelf.id}
-                     className="text-[9px] font-black uppercase tracking-widest text-brand-cyan hover:text-brand-deep transition-all px-3 py-1 bg-brand-cyan/5 rounded-lg"
+                     className="text-xs font-black uppercase tracking-widest text-brand-cyan hover:text-brand-deep transition-all px-4 py-2 bg-brand-cyan/5 rounded-xl"
                    >
                      {isSynthesizing === shelf.id ? 'Synthesizing...' : 'Consult Curator'}
                    </button>
@@ -186,8 +185,8 @@ const BeholdView: React.FC<{
 
             {curatorNotes[shelf.id] && (
               <div className="bg-brand-deep text-parchment p-8 rounded-[2.5rem] shadow-2xl animate-in slide-in-from-top-4 duration-700 relative overflow-hidden group border border-brand-cyan/20">
-                <h4 className="text-[8px] font-black uppercase tracking-[0.4em] mb-4 text-brand-cyan">Curator's Monograph Synthesis</h4>
-                <p className="font-header text-lg italic leading-relaxed opacity-90 whitespace-pre-wrap">{curatorNotes[shelf.id]}</p>
+                <h4 className="text-xs font-black uppercase tracking-[0.4em] mb-4 text-brand-cyan">Curator's Monograph Synthesis</h4>
+                <p className="font-header text-xl italic leading-relaxed opacity-90 whitespace-pre-wrap">{curatorNotes[shelf.id]}</p>
               </div>
             )}
 
@@ -196,7 +195,7 @@ const BeholdView: React.FC<{
                 <BookItem key={book.id} book={book} onClick={onBookClick} />
               ))}
               {shelf.books.length === 0 && (
-                <div className="col-span-full py-8 text-center border border-dashed border-ink/10 rounded-2xl opacity-40 text-xs italic">
+                <div className="col-span-full py-12 text-center border border-dashed border-ink/10 rounded-2xl opacity-60 text-sm italic">
                   This shelf is currently vacant. Move volumes here from their folios.
                 </div>
               )}

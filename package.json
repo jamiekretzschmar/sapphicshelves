@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:android": "BROWSER=termux-open-url vite --host",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
