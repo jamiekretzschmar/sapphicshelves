@@ -1,8 +1,9 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Book, BookStatus, Shelf } from '../types';
 import { geminiService } from '../services/gemini';
 import { useHaptics } from '../hooks/useHaptics';
+import { compressImage } from '../utils/image';
 
 interface BookDetailProps {
   book: Book;
@@ -34,8 +35,8 @@ const BookDetail: React.FC<BookDetailProps> = ({
   const [imageErrorLevel, setImageErrorLevel] = useState(0);
   const [editValues, setEditValues] = useState({ title: book.title, author: book.author });
   const haptics = useHaptics();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Local state for auto-save fields
   const [notes, setNotes] = useState(book.userNotes || '');
 
   useEffect(() => {
@@ -83,6 +84,20 @@ const BookDetail: React.FC<BookDetailProps> = ({
     }
   };
 
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      haptics.trigger('medium');
+      const compressed = await compressImage(await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      }), 0.8);
+      onUpdate({ ...book, coverUrl: compressed });
+      setImageErrorLevel(0); // Reset error level to force render
+    }
+  };
+
   const currentCoverUrl = useMemo(() => {
     if (imageErrorLevel === 0 && book.coverUrl) return book.coverUrl;
     if (imageErrorLevel <= 1 && book.isbn) {
@@ -99,22 +114,18 @@ const BookDetail: React.FC<BookDetailProps> = ({
     dnf: 'bg-rose/10 text-rose'
   };
 
-  const statusLabels: Record<BookStatus, string> = {
-    tbr: 'To Be Read',
-    reading: 'Currently Reading',
-    read: 'Finished',
-    dnf: 'Did Not Finish'
-  };
-
   return (
-    <div className="bg-parchment/95 backdrop-blur-xl border border-ink/10 rounded-[2rem] shadow-2xl relative animate-in zoom-in-95 duration-300 overflow-hidden flex flex-col max-h-[90vh]">
+    <div 
+      className="bg-parchment/95 backdrop-blur-xl border border-ink/10 rounded-[2rem] shadow-2xl relative animate-in zoom-in-95 duration-300 overflow-hidden flex flex-col max-h-[90vh] w-full max-w-2xl mx-auto"
+      style={{ overscrollBehavior: 'contain' }}
+    >
       {/* Header */}
-      <div className="flex justify-between items-center p-6 border-b border-ink/5">
+      <div className="flex justify-between items-center p-6 border-b border-ink/5 shrink-0">
         <span className="text-[9px] font-black uppercase tracking-[0.4em] text-brand-cyan">Archival Folio</span>
         <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-ink/5 hover:bg-rose hover:text-white transition-all">✕</button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-8">
+      <div className="flex-1 overflow-y-auto p-6 space-y-8 overscroll-contain">
         <div className="flex flex-col md:flex-row gap-8">
           {/* Cover & Actions */}
           <div className="flex flex-col gap-4 w-full md:w-48 shrink-0">
@@ -131,8 +142,27 @@ const BookDetail: React.FC<BookDetailProps> = ({
                     <span className="text-[10px] text-ink/30 italic">No Cover</span>
                   </div>
                 )}
+                
+                {/* Manual Upload Overlay */}
+                <div 
+                  className="absolute inset-0 bg-ink/60 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <svg className="w-8 h-8 text-parchment mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m-4-4v12" />
+                  </svg>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-parchment">Upload Cover</span>
+                </div>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  accept="image/*" 
+                  onChange={handleCoverUpload} 
+                />
+
                 {isEnriching && (
-                  <div className="absolute inset-0 bg-brand-deep/40 backdrop-blur-sm flex items-center justify-center">
+                  <div className="absolute inset-0 bg-brand-deep/40 backdrop-blur-sm flex items-center justify-center pointer-events-none">
                     <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   </div>
                 )}
@@ -250,7 +280,7 @@ const BookDetail: React.FC<BookDetailProps> = ({
         )}
       </div>
 
-      <div className="p-4 border-t border-ink/5 bg-mica-surface flex justify-between items-center">
+      <div className="p-4 border-t border-ink/5 bg-mica-surface flex justify-between items-center shrink-0">
         <span className="text-[8px] font-mono text-ink/30">ID: {book.id}</span>
         <button 
           onClick={handleDelete}

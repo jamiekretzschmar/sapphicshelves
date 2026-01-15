@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { NavigationTab } from './types';
 import { useArchive } from './hooks/useArchive';
@@ -33,6 +32,9 @@ const App: React.FC = () => {
     updateAuthor,
     syncAuthorPulse,
     syncingAuthors,
+    activeTasks,
+    startTask,
+    endTask,
     bulkUpdateAuthors,
     toggleBookStatus,
     setAuthorFilter,
@@ -44,7 +46,9 @@ const App: React.FC = () => {
     setSortMode,
     setStatusFilter,
     importArchive,
-    resetArchive
+    resetArchive,
+    addLexiconFavorite,
+    removeLexiconFavorite
   } = useArchive();
 
   const haptics = useHaptics();
@@ -90,8 +94,8 @@ const App: React.FC = () => {
       result = result.filter(b => b.status === state.statusFilter);
     }
 
-    // 3. Sorting
-    return result.sort((a, b) => {
+    // 3. Sorting (Prevent Mutation with spread)
+    return [...result].sort((a, b) => {
       switch (state.sortMode) {
         case 'date_asc': return new Date(a.scannedAt).getTime() - new Date(b.scannedAt).getTime();
         case 'date_desc': return new Date(b.scannedAt).getTime() - new Date(a.scannedAt).getTime();
@@ -135,6 +139,7 @@ const App: React.FC = () => {
     if (!urlInput.trim()) return;
     
     setIsIngestingUrl(true);
+    const taskId = startTask('Ingesting URL');
     try {
       const normalized = UrlNormalizer.normalize(urlInput);
       showToast(`Ingesting ${normalized.type}...`);
@@ -151,6 +156,7 @@ const App: React.FC = () => {
       showToast(err.message, "error");
     } finally {
       setIsIngestingUrl(false);
+      endTask(taskId);
     }
   };
 
@@ -170,6 +176,7 @@ const App: React.FC = () => {
       onExport={handleExport}
       onImport={importArchive}
       onReset={resetArchive}
+      activeTasks={activeTasks}
     >
       <CommandPalette 
         isOpen={isPaletteOpen}
@@ -206,7 +213,6 @@ const App: React.FC = () => {
             onSyncAuthor={handleSyncAuthor}
             onUpdate={(b) => {
               updateBook(b);
-              // showToast("Folio Updated"); // Too noisy
             }} 
             onDelete={(id) => {
               deleteBook(id);
@@ -219,7 +225,7 @@ const App: React.FC = () => {
       ) : (
         <>
           {activeTab === NavigationTab.LIBRARY && (
-            <div className="space-y-6 px-2">
+            <div className="space-y-6 px-2 pb-24">
               <section className="bg-md-sys-secondaryContainer/10 p-5 rounded-[2rem] border border-md-sys-secondaryContainer/20 shadow-inner">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-[10px] font-black uppercase tracking-widest text-md-sys-primary">Acquisition Bridge</h3>
@@ -242,20 +248,12 @@ const App: React.FC = () => {
                 </form>
               </section>
 
-              <div className="px-2">
-                <input 
-                  type="text"
-                  placeholder="Search Monograph..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-md-sys-surface border border-brand-deep/10 px-5 py-4 rounded-2xl text-xs focus:outline-none focus:ring-2 focus:ring-md-sys-primary/10 transition-all italic shadow-sm"
-                />
-              </div>
-
               <Archive 
                 books={filteredBooks} 
                 sortMode={state.sortMode}
                 statusFilter={state.statusFilter}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
                 onSortChange={setSortMode}
                 onFilterChange={setStatusFilter}
                 onBookClick={(b) => setSelectedBookId(b.id)} 
@@ -289,13 +287,18 @@ const App: React.FC = () => {
             <div className="px-4">
               <LexiconView 
                 books={state.books}
+                lexiconFavorites={state.lexiconFavorites}
                 onBookClick={(b) => setSelectedBookId(b.id)}
                 onUpdateBook={updateBook}
                 onAcquireBook={(b) => {
                   addBooks([b]);
                   showToast(`${b.title} Inscribed`);
                 }}
+                onAddFavorite={addLexiconFavorite}
+                onRemoveFavorite={removeLexiconFavorite}
                 canadianFocus={state.settings.canadianFocus}
+                startTask={startTask}
+                endTask={endTask}
               />
             </div>
           )}
@@ -361,4 +364,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-        

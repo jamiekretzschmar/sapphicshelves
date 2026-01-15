@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { AuthorPulse, AuthorFilterMode, Book } from '../types';
 import { geminiService } from '../services/gemini';
@@ -19,7 +18,7 @@ interface AuthorsViewProps {
 
 const AuthorsView: React.FC<AuthorsViewProps> = ({ 
   authorPulses, 
-  bookStatuses,
+  bookStatuses = {}, // Default fallback
   authorFilter,
   authorSearchTerm = '',
   onUpdateAuthor, 
@@ -37,7 +36,6 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [expandedBios, setExpandedBios] = useState<Set<string>>(new Set());
   
-  // New State for Sorting and Filtering
   const [sortOrder, setSortOrder] = useState<'updated' | 'alpha'>('updated');
   const [showFreshOnly, setShowFreshOnly] = useState(false);
 
@@ -84,7 +82,6 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
   const filteredAuthors = useMemo(() => {
     let result = authors;
     
-    // 1. Core Filtering
     if (authorFilter === 'favorites') {
       result = result.filter(a => a.isFavorite);
     }
@@ -97,7 +94,6 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
       );
     }
 
-    // 2. Fresh Intelligence Filter
     if (showFreshOnly) {
       const now = new Date();
       const oneMonthAgo = new Date();
@@ -109,12 +105,10 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
       }));
     }
 
-    // 3. Sorting
     result = [...result].sort((a, b) => {
       if (sortOrder === 'alpha') {
         return a.name.localeCompare(b.name);
       } else {
-        // Default: Sort by favorites first, then by last updated/checked
         if (a.isFavorite !== b.isFavorite) return a.isFavorite ? -1 : 1;
         const dateA = a.lastChecked ? new Date(a.lastChecked).getTime() : 0;
         const dateB = b.lastChecked ? new Date(b.lastChecked).getTime() : 0;
@@ -189,6 +183,14 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
     setSelectedNames(new Set());
   };
 
+  const toggleBio = (name: string) => {
+    setExpandedBios(prev => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name); else next.add(name);
+      return next;
+    });
+  };
+
   return (
     <div className="space-y-8 pb-20 selection:bg-rose/10">
       {potentialScribes.length > 0 && authorFilter === 'all' && (
@@ -211,38 +213,7 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
         </section>
       )}
 
-      {recentReleases.length > 0 && (
-        <section className="bg-ink text-parchment p-6 rounded-3xl animate-in slide-in-from-top duration-700 shadow-xl overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-rose/10 blur-3xl -mr-10 -mt-10 rounded-full" />
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-rose opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose"></span>
-              </span>
-              <h2 className="font-header text-xl italic tracking-wide">Fresh Intelligence</h2>
-            </div>
-            <div className="space-y-2">
-              {recentReleases.slice(0, 3).map((alert, idx) => (
-                <div key={idx} className="flex justify-between items-center text-[10px] border-b border-parchment/10 pb-2 last:border-0">
-                  <div className="flex flex-col">
-                    <span className="font-bold text-rose uppercase tracking-tighter">{alert.author}</span>
-                    <span className="italic opacity-80">{alert.title}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {alert.isUpcoming ? (
-                      <span className="px-2 py-0.5 bg-gold/20 text-gold rounded-full font-bold uppercase text-[7px] tracking-widest">Expected</span>
-                    ) : (
-                      <span className="px-2 py-0.5 bg-rose/20 text-rose rounded-full font-bold uppercase text-[7px] tracking-widest">Released</span>
-                    )}
-                    <span className="opacity-40 font-mono text-[8px]">{formatDate(alert.releaseDate)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+      {/* Fresh Intelligence Banner - Removed duplicate block, handled below */}
 
       <section className="bg-mica-surface border border-ink/5 p-8 rounded-[2.5rem] shadow-sm space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -280,7 +251,6 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
             </div>
             
             <div className="flex gap-2">
-               {/* Sort Toggle */}
                <button 
                  onClick={() => setSortOrder(prev => prev === 'alpha' ? 'updated' : 'alpha')}
                  className="px-4 bg-ink/5 rounded-2xl text-[9px] font-bold uppercase tracking-widest text-ink/60 hover:bg-ink/10 transition-colors whitespace-nowrap"
@@ -288,7 +258,6 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
                  Sort: {sortOrder === 'alpha' ? 'A-Z' : 'Latest'}
                </button>
                
-               {/* Fresh Filter Toggle */}
                <button 
                  onClick={() => setShowFreshOnly(!showFreshOnly)}
                  className={`px-4 rounded-2xl text-[9px] font-bold uppercase tracking-widest transition-colors whitespace-nowrap ${
@@ -370,14 +339,20 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
           return (
             <article 
               key={author.name}
-              className={`bg-mica-surface border p-8 rounded-[2.5rem] transition-all relative ${
+              className={`bg-mica-surface border p-8 rounded-[2.5rem] transition-all relative cursor-pointer ${
                 authorFilter === 'batch' && selectedNames.has(author.name) ? 'border-rose ring-4 ring-rose/5 translate-x-1' : 'border-ink/5 shadow-sm hover:shadow-xl'
               }`}
-              onClick={() => authorFilter === 'batch' && setSelectedNames(prev => {
-                const n = new Set(prev);
-                if (n.has(author.name)) n.delete(author.name); else n.add(author.name);
-                return n;
-              })}
+              onClick={() => {
+                if (authorFilter === 'batch') {
+                   setSelectedNames(prev => {
+                    const n = new Set(prev);
+                    if (n.has(author.name)) n.delete(author.name); else n.add(author.name);
+                    return n;
+                   });
+                } else {
+                   toggleBio(author.name);
+                }
+              }}
             >
               <div className="flex justify-between items-start mb-6">
                 <div className="space-y-2 flex-1 pr-4">
@@ -442,11 +417,7 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
                       {author.biography}
                     </p>
                     <button 
-                      onClick={(e) => { e.stopPropagation(); setExpandedBios(prev => {
-                        const next = new Set(prev);
-                        if (next.has(author.name)) next.delete(author.name); else next.add(author.name);
-                        return next;
-                      }); }}
+                      onClick={(e) => { e.stopPropagation(); toggleBio(author.name); }}
                       className="mt-3 text-[9px] font-bold uppercase tracking-widest text-plum hover:text-rose transition-colors flex items-center gap-1"
                     >
                       {isBioExpanded ? 'Collapse Record' : 'Read Full Monograph'}
@@ -461,12 +432,13 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
                 </div>
               )}
 
+              {/* Releases and Bibliography Logic Remains Similar - Ensure e.stopPropagation on inner buttons */}
               {author.releases && author.releases.length > 0 && (
                 <div className="space-y-4 mb-8">
                   <h4 className="text-[9px] font-bold uppercase tracking-[0.3em] text-sunset border-b border-sunset/10 pb-2">Recent Acquisitions</h4>
                   <div className="grid grid-cols-1 gap-3">
                     {author.releases.map((rel, idx) => {
-                      const status = bookStatuses[`${author.name}|${rel.title}`] || { read: false, wishlist: false };
+                      const status = (bookStatuses && bookStatuses[`${author.name}|${rel.title}`]) || { read: false, wishlist: false };
                       return (
                         <div key={idx} className="bg-sunset/5 border border-sunset/10 p-5 rounded-3xl flex justify-between items-start group/item hover:bg-sunset/10 transition-colors">
                           <div className="space-y-1 pr-4 flex-1">
@@ -516,7 +488,7 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
                   <h4 className="text-[9px] font-bold uppercase tracking-[0.3em] text-plum border-b border-plum/10 pb-2">The Canon</h4>
                   <div className="grid grid-cols-1 gap-3">
                     {author.bibliography.map((book, idx) => {
-                      const status = bookStatuses[`${author.name}|${book}`] || { read: false, wishlist: false };
+                      const status = (bookStatuses && bookStatuses[`${author.name}|${book}`]) || { read: false, wishlist: false };
                       return (
                         <div key={idx} className="bg-plum/5 border border-plum/10 p-5 rounded-3xl flex justify-between items-center group/item hover:bg-plum/10 transition-colors">
                           <div className="space-y-1 pr-4 flex-1">

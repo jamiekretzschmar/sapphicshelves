@@ -4,6 +4,26 @@ import { ArchiveState, Book } from '../types';
 const STORAGE_KEY = 'sapphic_shelves_archive_v5';
 const CURRENT_VERSION = '5.0.0';
 
+const DEFAULT_STATE: ArchiveState = {
+  version: CURRENT_VERSION,
+  books: [],
+  shelves: [],
+  authorPulses: {},
+  bookStatuses: {}, 
+  lexiconFavorites: [],
+  theme: 'light',
+  authorFilter: 'all',
+  authorSearchTerm: '',
+  sortMode: 'date_desc',
+  statusFilter: 'all',
+  settings: {
+    canadianFocus: false,
+    autoEnrich: true,
+    hapticsEnabled: true,
+    largeText: false
+  }
+};
+
 export const persistenceService = {
   save(state: ArchiveState) {
     try {
@@ -15,25 +35,8 @@ export const persistenceService = {
 
   load(): ArchiveState {
     const data = localStorage.getItem(STORAGE_KEY);
-    const defaults: ArchiveState = {
-      version: CURRENT_VERSION,
-      books: [],
-      shelves: [],
-      authorPulses: {},
-      theme: 'light',
-      authorFilter: 'all',
-      authorSearchTerm: '',
-      sortMode: 'date_desc',
-      statusFilter: 'all',
-      settings: {
-        canadianFocus: false,
-        autoEnrich: true,
-        hapticsEnabled: true,
-        largeText: false
-      }
-    };
-
-    if (!data) return defaults;
+    
+    if (!data) return DEFAULT_STATE;
 
     try {
       const parsed = JSON.parse(data);
@@ -52,16 +55,18 @@ export const persistenceService = {
         }));
 
         return { 
-          ...defaults, 
+          ...DEFAULT_STATE, 
           ...parsed, 
           books: migratedBooks,
+          lexiconFavorites: parsed.lexiconFavorites || [],
+          bookStatuses: parsed.bookStatuses || {}, 
           version: CURRENT_VERSION 
         };
       }
-      return { ...defaults, ...parsed };
+      return { ...DEFAULT_STATE, ...parsed };
     } catch (e) {
       console.warn("Archive corruption detected. Resetting to defaults.");
-      return defaults;
+      return DEFAULT_STATE;
     }
   },
 
@@ -86,8 +91,8 @@ export const persistenceService = {
              reject(new Error("Invalid archive format"));
              return;
           }
-          // Force version update on import
-          resolve({ ...parsed, version: CURRENT_VERSION });
+          // Merge with defaults to ensure all fields (shelves, etc) exist even if missing in import
+          resolve({ ...DEFAULT_STATE, ...parsed, version: CURRENT_VERSION });
         } catch (err) {
           reject(err);
         }

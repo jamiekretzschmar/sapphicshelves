@@ -19,6 +19,7 @@ export interface Book {
   author: string;
   isbn?: string;
   coverUrl?: string;
+  publicationYear?: number;
   tropes?: string[];
   userTags?: string[]; // Manual tags
   synopsis?: string;
@@ -37,6 +38,7 @@ export interface Book {
     publisher?: string;
     pageCount?: number;
   };
+  sources?: { title: string; uri: string }[];
 }
 
 export interface AuthorRelease {
@@ -71,11 +73,18 @@ export interface Opportunity {
   validity_score?: number;
 }
 
+export interface SystemTask {
+  id: string;
+  label: string;
+}
+
 export interface ArchiveState {
   version: string;
   books: Book[];
   shelves: Shelf[];
   authorPulses: Record<string, AuthorPulse>;
+  bookStatuses: Record<string, { read: boolean; wishlist: boolean }>; // Added missing field
+  lexiconFavorites: string[]; // User defined trope favorites
   theme: Theme;
   authorFilter: AuthorFilterMode;
   authorSearchTerm: string;
