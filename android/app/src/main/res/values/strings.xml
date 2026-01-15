@@ -1,4 +1,7 @@
-
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Sapphic Shelves</string>
+    <string name="app_name">SapphicShelves</string>
+    <string name="title_activity_main">SapphicShelves</string>
+    <string name="package_name">com.sapphicshelves.app</string>
+    <string name="custom_url_scheme">com.sapphicshelves.app</string>
 </resources>
