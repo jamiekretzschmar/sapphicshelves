@@ -19,6 +19,7 @@ export interface Book {
   author: string;
   isbn?: string;
   coverUrl?: string;
+  publicationYear?: number;
   tropes?: string[];
   userTags?: string[]; // Manual tags
   synopsis?: string;
@@ -37,6 +38,7 @@ export interface Book {
     publisher?: string;
     pageCount?: number;
   };
+  sources?: { title: string; uri: string }[];
 }
 
 export interface AuthorRelease {

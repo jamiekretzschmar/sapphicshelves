@@ -110,9 +110,14 @@ const BookCard: React.FC<BookCardProps> = ({
           <h3 className="text-sm font-header font-bold italic text-brand-deep leading-tight line-clamp-2">
             {book.title}
           </h3>
-          <p className="text-[10px] font-sans text-ink/50 truncate font-medium uppercase tracking-wide mt-0.5">
-            {book.author}
-          </p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <p className="text-[10px] font-sans text-ink/50 truncate font-medium uppercase tracking-wide">
+              {book.author}
+            </p>
+            {book.publicationYear && (
+              <span className="text-[9px] font-mono text-ink/30">({book.publicationYear})</span>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-2 mt-auto">
