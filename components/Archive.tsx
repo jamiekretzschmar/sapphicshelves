@@ -1,10 +1,12 @@
-import React from 'react';
-import { Book, SortOption, BookStatus } from '../types';
+
+import React, { useState, useMemo } from 'react';
+import { Book, SortOption, BookStatus, Shelf } from '../types';
 import BookCard from './BookCard';
 import TropeAnalytics from './TropeAnalytics';
 
 interface ArchiveProps {
   books: Book[];
+  shelves?: Shelf[];
   sortMode: SortOption;
   statusFilter: BookStatus | 'all';
   searchQuery?: string;
@@ -13,10 +15,13 @@ interface ArchiveProps {
   onSortChange: (mode: SortOption) => void;
   onFilterChange: (status: BookStatus | 'all') => void;
   onManualAdd: () => void;
+  onBulkUpdate?: (bookIds: string[], updates: Partial<Book>) => void;
+  onBulkDelete?: (bookIds: string[]) => void;
 }
 
 const Archive: React.FC<ArchiveProps> = ({ 
   books, 
+  shelves = [],
   sortMode,
   statusFilter,
   searchQuery = '',
@@ -24,8 +29,77 @@ const Archive: React.FC<ArchiveProps> = ({
   onBookClick,
   onSortChange,
   onFilterChange,
-  onManualAdd
+  onManualAdd,
+  onBulkUpdate,
+  onBulkDelete
 }) => {
+  // Batch State
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  
+  // Advanced Filter State
+  const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
+  const [advFilters, setAdvFilters] = useState({
+    author: '',
+    tag: '',
+    year: ''
+  });
+
+  // Filter Logic including Advanced Filters
+  const displayedBooks = useMemo(() => {
+    let result = books;
+
+    // Advanced Filters
+    if (advFilters.author) {
+      result = result.filter(b => b.author.toLowerCase().includes(advFilters.author.toLowerCase()));
+    }
+    if (advFilters.tag) {
+      result = result.filter(b => b.tropes?.some(t => t.toLowerCase().includes(advFilters.tag.toLowerCase())));
+    }
+    if (advFilters.year) {
+      result = result.filter(b => {
+        if (!b.metadata?.publisher && !b.scannedAt) return false;
+        // Simple year check based on scan time or could be metadata if available
+        return b.scannedAt.startsWith(advFilters.year);
+      });
+    }
+
+    return result;
+  }, [books, advFilters]);
+
+  // Selection Handlers
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkStatus = (status: BookStatus) => {
+    if (onBulkUpdate) {
+      onBulkUpdate(Array.from(selectedIds), { status });
+      setIsSelectionMode(false);
+      setSelectedIds(new Set());
+    }
+  };
+
+  const handleBulkShelf = (shelfId: string) => {
+    if (onBulkUpdate) {
+      onBulkUpdate(Array.from(selectedIds), { shelfId: shelfId || undefined });
+      setIsSelectionMode(false);
+      setSelectedIds(new Set());
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (onBulkDelete && confirm(`Are you sure you want to delete ${selectedIds.size} volumes?`)) {
+      onBulkDelete(Array.from(selectedIds));
+      setIsSelectionMode(false);
+      setSelectedIds(new Set());
+    }
+  };
+
   if (books.length === 0 && statusFilter === 'all' && !searchQuery) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-8 animate-fade-in">
@@ -49,18 +123,62 @@ const Archive: React.FC<ArchiveProps> = ({
   }
 
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in pb-32">
       <div className="px-4 py-4">
         <TropeAnalytics books={books} />
       </div>
+
+      {/* Advanced Search Drawer */}
+      {showAdvancedSearch && (
+        <div className="px-4 mb-4 animate-in slide-in-from-top-4">
+           <div className="bg-mica-surface border border-ink/5 p-5 rounded-2xl shadow-inner space-y-4">
+              <div className="flex justify-between items-center">
+                 <h3 className="text-[10px] font-black uppercase tracking-widest text-ink/40">Card Catalog Filters</h3>
+                 <button onClick={() => { setAdvFilters({author:'', tag:'', year:''}); setShowAdvancedSearch(false); }} className="text-[9px] text-rose font-bold uppercase">Clear & Close</button>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                 <input 
+                   placeholder="Filter by Author..."
+                   value={advFilters.author}
+                   onChange={e => setAdvFilters({...advFilters, author: e.target.value})}
+                   className="bg-parchment px-3 py-2 rounded-lg text-xs border border-ink/5 outline-none focus:border-brand-cyan/50"
+                 />
+                 <input 
+                   placeholder="Filter by Tag..."
+                   value={advFilters.tag}
+                   onChange={e => setAdvFilters({...advFilters, tag: e.target.value})}
+                   className="bg-parchment px-3 py-2 rounded-lg text-xs border border-ink/5 outline-none focus:border-brand-cyan/50"
+                 />
+                 <input 
+                   placeholder="Year (YYYY)..."
+                   value={advFilters.year}
+                   onChange={e => setAdvFilters({...advFilters, year: e.target.value})}
+                   className="bg-parchment px-3 py-2 rounded-lg text-xs border border-ink/5 outline-none focus:border-brand-cyan/50"
+                 />
+              </div>
+           </div>
+        </div>
+      )}
 
       {/* Sticky Filter & Search Bar */}
       <div className="sticky top-0 z-30 -mx-2 px-6 py-4 bg-parchment/95 backdrop-blur-xl border-b border-ink/5 shadow-sm mb-4 transition-all flex flex-col gap-3">
         <div className="flex items-center justify-between">
            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-ink/40">Active Filter Protocol</h2>
-           <button onClick={onManualAdd} className="text-[10px] font-bold uppercase tracking-widest text-brand-cyan hover:text-brand-deep">
-             + Add Entry
-           </button>
+           <div className="flex gap-4">
+             <button onClick={() => setShowAdvancedSearch(!showAdvancedSearch)} className="text-[10px] font-bold uppercase tracking-widest text-ink/40 hover:text-brand-cyan">
+               {showAdvancedSearch ? 'Hide Filters' : 'Adv. Search'}
+             </button>
+             {!isSelectionMode && (
+               <button onClick={() => setIsSelectionMode(true)} className="text-[10px] font-bold uppercase tracking-widest text-ink/40 hover:text-brand-deep">
+                 Batch Edit
+               </button>
+             )}
+             {isSelectionMode && (
+               <button onClick={() => { setIsSelectionMode(false); setSelectedIds(new Set()); }} className="text-[10px] font-bold uppercase tracking-widest text-rose">
+                 Cancel Batch
+               </button>
+             )}
+           </div>
         </div>
 
         {onSearchChange && (
@@ -109,22 +227,64 @@ const Archive: React.FC<ArchiveProps> = ({
       </div>
         
       <div className="px-4 space-y-1 min-h-[50vh]">
-        {books.map((book) => (
+        {displayedBooks.map((book) => (
           <BookCard 
             key={book.id} 
             book={book} 
-            onClick={() => onBookClick(book)} 
+            onClick={() => onBookClick(book)}
+            selectionMode={isSelectionMode}
+            isSelected={selectedIds.has(book.id)}
+            onToggleSelect={() => toggleSelection(book.id)}
           />
         ))}
         
-        {books.length === 0 && (
+        {displayedBooks.length === 0 && (
           <div className="py-20 text-center flex flex-col items-center opacity-50">
              <span className="text-4xl mb-2">🧐</span>
              <p className="text-xs font-bold uppercase tracking-widest text-ink/60">No matching volumes found.</p>
-             <button onClick={() => { onFilterChange('all'); if(onSearchChange) onSearchChange(''); }} className="mt-4 text-xs text-brand-cyan underline">Clear Filters</button>
+             <button onClick={() => { onFilterChange('all'); if(onSearchChange) onSearchChange(''); setAdvFilters({author:'', tag:'', year:''}); }} className="mt-4 text-xs text-brand-cyan underline">Clear Filters</button>
           </div>
         )}
       </div>
+
+      {/* Floating Batch Action Dock */}
+      {isSelectionMode && selectedIds.size > 0 && (
+        <div className="fixed bottom-24 left-4 right-4 z-40 animate-in slide-in-from-bottom-6">
+          <div className="bg-ink/95 backdrop-blur-md text-parchment p-4 rounded-3xl shadow-2xl flex flex-col gap-3 border border-white/10">
+            <div className="flex justify-between items-center border-b border-white/10 pb-2">
+              <span className="text-[10px] font-black uppercase tracking-widest">{selectedIds.size} Selected</span>
+              <button onClick={() => { setIsSelectionMode(false); setSelectedIds(new Set()); }} className="text-rose text-[9px] font-bold uppercase">Close</button>
+            </div>
+            
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+               {/* Bulk Status */}
+               <div className="relative group shrink-0">
+                  <button className="px-4 py-3 bg-brand-cyan text-white rounded-xl text-[9px] font-bold uppercase tracking-wider">Set Status</button>
+                  <div className="absolute bottom-full left-0 mb-2 w-32 bg-white rounded-xl shadow-xl overflow-hidden hidden group-focus-within:block group-hover:block">
+                     <button onClick={() => handleBulkStatus('tbr')} className="block w-full text-left px-4 py-2 text-ink text-[10px] hover:bg-ink/5">To Read</button>
+                     <button onClick={() => handleBulkStatus('reading')} className="block w-full text-left px-4 py-2 text-ink text-[10px] hover:bg-ink/5">Reading</button>
+                     <button onClick={() => handleBulkStatus('read')} className="block w-full text-left px-4 py-2 text-ink text-[10px] hover:bg-ink/5">Finished</button>
+                  </div>
+               </div>
+
+               {/* Bulk Shelf Move */}
+               {shelves.length > 0 && (
+                 <div className="relative group shrink-0">
+                    <button className="px-4 py-3 bg-brand-deep text-white border border-white/20 rounded-xl text-[9px] font-bold uppercase tracking-wider">Move Shelf</button>
+                     <div className="absolute bottom-full left-0 mb-2 w-48 max-h-48 overflow-y-auto bg-white rounded-xl shadow-xl hidden group-focus-within:block group-hover:block">
+                       <button onClick={() => handleBulkShelf('')} className="block w-full text-left px-4 py-2 text-ink text-[10px] border-b border-ink/5 hover:bg-ink/5">Unshelf (Stack)</button>
+                       {shelves.map(s => (
+                         <button key={s.id} onClick={() => handleBulkShelf(s.id)} className="block w-full text-left px-4 py-2 text-ink text-[10px] hover:bg-ink/5 truncate">{s.title}</button>
+                       ))}
+                     </div>
+                 </div>
+               )}
+
+               <button onClick={handleBulkDelete} className="ml-auto px-4 py-3 bg-rose text-white rounded-xl text-[9px] font-bold uppercase tracking-wider shrink-0">Burn</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

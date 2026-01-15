@@ -2,6 +2,21 @@
 import { Opportunity, OpportunityType } from '../types';
 import { GoogleGenAI, Type } from "@google/genai";
 
+// Utility to clean AI output
+const cleanAndParseJSON = (text: string | undefined): any => {
+  if (!text) return {};
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    try {
+      return JSON.parse(cleaned);
+    } catch (e2) {
+      return {};
+    }
+  }
+};
+
 export class ResourceHunterService {
   /**
    * ACTOR: System Core (Sapphic Shelves Architecture)
@@ -58,7 +73,7 @@ export class ResourceHunterService {
     });
 
     try {
-      const data = JSON.parse(response.text || '{"resources": []}');
+      const data = cleanAndParseJSON(response.text);
       // Ruthless QA: Second pass filtering
       return (data.resources || []).filter((r: Opportunity) => 
         (r.title + r.description).toLowerCase().includes('sapphic')

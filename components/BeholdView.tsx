@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Book, Shelf } from '../types';
 import { geminiService } from '../services/gemini';
@@ -10,11 +11,11 @@ interface ShelfWithBooks extends Shelf {
 
 export function reconcileBooksToShelves(allBooks: Book[], allShelves: Shelf[]): ShelfWithBooks[] {
   const shelfMap = new Map<string, ShelfWithBooks>(
-    allShelves.map(s => [s.id, { ...s, books: [] }])
+    (allShelves || []).map(s => [s.id, { ...s, books: [] }])
   );
   const orphans: Book[] = [];
 
-  allBooks.forEach(book => {
+  (allBooks || []).forEach(book => {
     if (book.shelfId && shelfMap.has(book.shelfId)) {
       const target = shelfMap.get(book.shelfId)!;
       (target.books as Book[]).push(book);
@@ -85,7 +86,7 @@ const BeholdView: React.FC<{
   onBookClick: (b: Book) => void;
   onCreateShelf: (name: string) => void;
   onDeleteShelf: (id: string) => void;
-}> = ({ books, shelves, onBookClick, onCreateShelf, onDeleteShelf }) => {
+}> = ({ books = [], shelves = [], onBookClick, onCreateShelf, onDeleteShelf }) => {
   const [curatorNotes, setCuratorNotes] = useState<Record<string, string>>({});
   const [isSynthesizing, setIsSynthesizing] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);

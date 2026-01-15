@@ -5,7 +5,17 @@ import { persistenceService } from '../services/persistence';
 import { geminiService } from '../services/gemini';
 
 export function useArchive() {
-  const [state, setState] = useState<ArchiveState>(persistenceService.load());
+  const [state, setState] = useState<ArchiveState>(() => {
+    const loaded = persistenceService.load();
+    // Safety check to guarantee arrays exist
+    return {
+      ...loaded,
+      books: loaded.books || [],
+      shelves: loaded.shelves || [],
+      authorPulses: loaded.authorPulses || {}
+    };
+  });
+
   const [activeTab, setActiveTab] = useState<NavigationTab>(NavigationTab.LIBRARY);
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -32,6 +42,13 @@ export function useArchive() {
     setState(prev => ({
       ...prev,
       books: prev.books.map(b => b.id === updatedBook.id ? updatedBook : b)
+    }));
+  }, []);
+
+  const bulkUpdateBooks = useCallback((bookIds: string[], updates: Partial<Book>) => {
+    setState(prev => ({
+      ...prev,
+      books: prev.books.map(b => bookIds.includes(b.id) ? { ...b, ...updates } : b)
     }));
   }, []);
 
@@ -176,17 +193,15 @@ export function useArchive() {
     setState(prev => ({ ...prev, statusFilter: status }));
   }, []);
 
-  // Legacy support for toggleBookStatus
   const toggleBookStatus = useCallback((authorName: string, bookTitle: string, type: 'read' | 'wishlist') => {
      setState(prev => {
         const key = `${authorName}|${bookTitle}`;
-        // @ts-ignore
-        const current = prev.bookStatuses?.[key] || { read: false, wishlist: false };
+        const statuses = prev.bookStatuses || {}; // Safety check
+        const current = statuses[key] || { read: false, wishlist: false };
         return {
           ...prev,
           bookStatuses: {
-            // @ts-ignore
-            ...prev.bookStatuses,
+            ...statuses,
             [key]: { ...current, [type]: !current[type] }
           }
         };
@@ -256,6 +271,7 @@ export function useArchive() {
     searchQuery,
     setSearchQuery,
     updateBook,
+    bulkUpdateBooks,
     deleteBook,
     createManualBook,
     addBooks,

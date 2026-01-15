@@ -11,6 +11,7 @@ import AuthorsView from './components/AuthorsView';
 import ResourceHunter from './components/ResourceHunter';
 import BeholdView from './components/BeholdView';
 import LexiconView from './components/LexiconView';
+import SettingsView from './components/SettingsView';
 import CommandPalette from './components/CommandPalette';
 import { geminiService } from './services/gemini';
 import { persistenceService } from './services/persistence';
@@ -26,15 +27,30 @@ const App: React.FC = () => {
     searchQuery,
     setSearchQuery,
     updateBook,
+    bulkUpdateBooks,
+    deleteBook,
+    createManualBook,
     addBooks,
     updateAuthor,
     syncAuthorPulse,
     syncingAuthors,
+    activeTasks,
+    startTask,
+    endTask,
     bulkUpdateAuthors,
     toggleBookStatus,
     setAuthorFilter,
     setAuthorSearchTerm,
-    toggleTheme
+    toggleTheme,
+    updateSettings,
+    createShelf,
+    deleteShelf,
+    setSortMode,
+    setStatusFilter,
+    importArchive,
+    resetArchive,
+    addLexiconFavorite,
+    removeLexiconFavorite
   } = useArchive();
 
   const haptics = useHaptics();
@@ -63,14 +79,35 @@ const App: React.FC = () => {
   }, []);
 
   const filteredBooks = useMemo(() => {
+    let result = state.books;
+    
+    // 1. Text Search
     const query = searchQuery.toLowerCase().trim();
-    if (!query) return state.books;
-    return state.books.filter(b => 
-      b.title.toLowerCase().includes(query) || 
-      b.author.toLowerCase().includes(query) ||
-      b.tropes?.some(t => t.toLowerCase().includes(query))
-    );
-  }, [state.books, searchQuery]);
+    if (query) {
+      result = result.filter(b => 
+        b.title.toLowerCase().includes(query) || 
+        b.author.toLowerCase().includes(query) ||
+        b.tropes?.some(t => t.toLowerCase().includes(query))
+      );
+    }
+
+    // 2. Status Filter
+    if (state.statusFilter !== 'all') {
+      result = result.filter(b => b.status === state.statusFilter);
+    }
+
+    // 3. Sorting (Prevent Mutation with spread)
+    return [...result].sort((a, b) => {
+      switch (state.sortMode) {
+        case 'date_asc': return new Date(a.scannedAt).getTime() - new Date(b.scannedAt).getTime();
+        case 'date_desc': return new Date(b.scannedAt).getTime() - new Date(a.scannedAt).getTime();
+        case 'title': return a.title.localeCompare(b.title);
+        case 'author': return a.author.localeCompare(b.author);
+        case 'rating': return (b.rating || 0) - (a.rating || 0);
+        default: return 0;
+      }
+    });
+  }, [state.books, searchQuery, state.statusFilter, state.sortMode]);
 
   const selectedBook = state.books.find(b => b.id === selectedBookId);
 
@@ -104,6 +141,7 @@ const App: React.FC = () => {
     if (!urlInput.trim()) return;
     
     setIsIngestingUrl(true);
+    const taskId = startTask('Ingesting URL');
     try {
       const normalized = UrlNormalizer.normalize(urlInput);
       showToast(`Ingesting ${normalized.type}...`);
@@ -120,6 +158,7 @@ const App: React.FC = () => {
       showToast(err.message, "error");
     } finally {
       setIsIngestingUrl(false);
+      endTask(taskId);
     }
   };
 
@@ -137,6 +176,9 @@ const App: React.FC = () => {
       onOpenSettings={() => handleTabChange(NavigationTab.SETTINGS)}
       settings={state.settings}
       onExport={handleExport}
+      onImport={importArchive}
+      onReset={resetArchive}
+      activeTasks={activeTasks}
     >
       <CommandPalette 
         isOpen={isPaletteOpen}
@@ -154,7 +196,7 @@ const App: React.FC = () => {
 
       {/* Simulated Toast within Screen Viewport */}
       {toast && (
-        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-[150] px-4 py-2 bg-brand-deep/90 backdrop-blur-md text-parchment text-[10px] font-bold uppercase tracking-widest rounded-full shadow-2xl border border-parchment/10 animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-[150] px-4 py-2 bg-brand-deep/90 backdrop-blur-md text-parchment text-[10px] font-bold uppercase tracking-widest rounded-full shadow-2xl border border-parchment/10 animate-in fade-in slide-in-from-bottom-2 duration-300 pointer-events-none">
           <div className="flex items-center gap-2">
             <span className={`w-1.5 h-1.5 rounded-full ${toast.type === 'error' ? 'bg-rose-500' : 'bg-brand-cyan shadow-[0_0_8px_rgba(18,130,162,0.6)]'}`} />
             {toast.message}
@@ -166,14 +208,18 @@ const App: React.FC = () => {
         <div className="fixed inset-0 bg-parchment z-[100] p-4 overflow-y-auto">
           <BookDetail 
             book={selectedBook} 
+            shelves={state.shelves}
             isAuthorTracked={!!state.authorPulses[selectedBook.author]}
             isAuthorSyncing={syncingAuthors.has(selectedBook.author)}
             onTrackAuthor={handleAddAuthor}
             onSyncAuthor={handleSyncAuthor}
             onUpdate={(b) => {
               updateBook(b);
-              showToast("Folio Updated");
             }} 
+            onDelete={(id) => {
+              deleteBook(id);
+              showToast("Volume Burned", "warning");
+            }}
             onClose={() => setSelectedBookId(null)}
             onKeyError={() => showToast("Key Error", "error")}
           />
@@ -181,7 +227,7 @@ const App: React.FC = () => {
       ) : (
         <>
           {activeTab === NavigationTab.LIBRARY && (
-            <div className="space-y-6 px-2">
+            <div className="space-y-6 px-2 pb-24">
               <section className="bg-md-sys-secondaryContainer/10 p-5 rounded-[2rem] border border-md-sys-secondaryContainer/20 shadow-inner">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-[10px] font-black uppercase tracking-widest text-md-sys-primary">Acquisition Bridge</h3>
@@ -204,21 +250,28 @@ const App: React.FC = () => {
                 </form>
               </section>
 
-              <div className="px-2">
-                <input 
-                  type="text"
-                  placeholder="Search Monograph..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-md-sys-surface border border-brand-deep/10 px-5 py-4 rounded-2xl text-xs focus:outline-none focus:ring-2 focus:ring-md-sys-primary/10 transition-all italic shadow-sm"
-                />
-              </div>
-
               <Archive 
                 books={filteredBooks} 
+                shelves={state.shelves}
+                sortMode={state.sortMode}
+                statusFilter={state.statusFilter}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                onSortChange={setSortMode}
+                onFilterChange={setStatusFilter}
                 onBookClick={(b) => setSelectedBookId(b.id)} 
-                onTrackAuthor={handleAddAuthor}
-                isAuthorTracked={(name) => !!state.authorPulses[name]}
+                onManualAdd={() => {
+                   createManualBook();
+                   showToast("Manual Folio Created");
+                }}
+                onBulkUpdate={(ids, updates) => {
+                  bulkUpdateBooks(ids, updates);
+                  showToast(`Updated ${ids.length} Volumes`);
+                }}
+                onBulkDelete={(ids) => {
+                  ids.forEach(id => deleteBook(id));
+                  showToast(`${ids.length} Volumes Burned`, "warning");
+                }}
               />
             </div>
           )}
@@ -229,6 +282,14 @@ const App: React.FC = () => {
                 books={state.books} 
                 shelves={state.shelves} 
                 onBookClick={(b) => setSelectedBookId(b.id)} 
+                onCreateShelf={(name) => {
+                  createShelf(name);
+                  showToast("Shelf Constructed");
+                }}
+                onDeleteShelf={(id) => {
+                   deleteShelf(id);
+                   showToast("Shelf Dismantled");
+                }}
               />
             </div>
           )}
@@ -237,13 +298,18 @@ const App: React.FC = () => {
             <div className="px-4">
               <LexiconView 
                 books={state.books}
+                lexiconFavorites={state.lexiconFavorites}
                 onBookClick={(b) => setSelectedBookId(b.id)}
                 onUpdateBook={updateBook}
                 onAcquireBook={(b) => {
                   addBooks([b]);
                   showToast(`${b.title} Inscribed`);
                 }}
+                onAddFavorite={addLexiconFavorite}
+                onRemoveFavorite={removeLexiconFavorite}
                 canadianFocus={state.settings.canadianFocus}
+                startTask={startTask}
+                endTask={endTask}
               />
             </div>
           )}
@@ -290,16 +356,16 @@ const App: React.FC = () => {
           )}
 
           {activeTab === NavigationTab.SETTINGS && (
-            <div className="space-y-6 p-4 text-center py-20">
-               <div className="w-20 h-20 bg-brand-deep rounded-full flex items-center justify-center text-parchment font-header italic text-3xl mx-auto border-4 border-brand-cyan/20">A</div>
-               <h2 className="font-header text-3xl italic text-brand-deep mt-4">Archivist Protocols</h2>
-               <p className="text-xs text-ink/40 max-w-xs mx-auto">Access the side navigation drawer (top left) for full monograph settings and archival exports.</p>
-               <button 
-                 onClick={() => { haptics.trigger('medium'); setActiveTab(NavigationTab.LIBRARY); }}
-                 className="mt-8 px-8 py-3 bg-brand-deep text-parchment rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl"
-               >
-                 Return to Monograph
-               </button>
+            <div className="px-4">
+              <SettingsView 
+                settings={state.settings}
+                onUpdateSettings={updateSettings}
+                onExport={handleExport}
+                onImport={importArchive}
+                onReset={resetArchive}
+                theme={state.theme}
+                onToggleTheme={toggleTheme}
+              />
             </div>
           )}
         </>

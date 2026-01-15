@@ -5,6 +5,24 @@ const getAIClient = () => {
   return new GoogleGenAI({ apiKey: process.env.API_KEY });
 };
 
+// Utility to clean AI output which often includes markdown code blocks despite schema constraints
+const cleanAndParseJSON = (text: string | undefined): any => {
+  if (!text) return {};
+  try {
+    // Attempt direct parse
+    return JSON.parse(text);
+  } catch (e) {
+    // Remove markdown code blocks if present
+    const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    try {
+      return JSON.parse(cleaned);
+    } catch (e2) {
+      console.warn("Failed to parse JSON even after cleaning:", text);
+      return {};
+    }
+  }
+};
+
 export const geminiService = {
   async scanShelf(imagesBase64: string[]): Promise<any[]> {
     const ai = getAIClient();
@@ -45,7 +63,7 @@ export const geminiService = {
         }
       });
 
-      const data = JSON.parse(response.text || '{}');
+      const data = cleanAndParseJSON(response.text);
       return data.books || [];
     } catch (e) {
       console.error("Failed to parse shelf scan response", e);
@@ -83,14 +101,7 @@ export const geminiService = {
         }
       });
 
-      let metadata: any = {};
-      try {
-        metadata = JSON.parse(response.text || '{}');
-      } catch (e) {
-        console.warn("Enrichment fallback parsing");
-      }
-
-      return metadata;
+      return cleanAndParseJSON(response.text);
     } catch (e) {
       console.error("Enrichment failed", e);
       return {};
@@ -134,7 +145,7 @@ export const geminiService = {
         }
       });
       
-      const data = JSON.parse(response.text || '{}');
+      const data = cleanAndParseJSON(response.text);
       return data.suggestions || [];
     } catch {
       return [];
@@ -168,7 +179,7 @@ export const geminiService = {
         }
       });
 
-      return JSON.parse(response.text || '{}');
+      return cleanAndParseJSON(response.text);
     } catch (e) {
       return null;
     }
@@ -215,12 +226,7 @@ export const geminiService = {
         }
       });
 
-      let data: any = {};
-      try {
-        data = JSON.parse(response.text || '{}');
-      } catch (e) {
-        console.warn("Unified Sync fallback parsing");
-      }
+      const data = cleanAndParseJSON(response.text);
 
       const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks
         ?.map((chunk: any) => ({
@@ -274,7 +280,7 @@ export const geminiService = {
         }
       });
       
-      const data = JSON.parse(response.text || '{}');
+      const data = cleanAndParseJSON(response.text);
       return data.recommendations || [];
     } catch (e) {
       console.error("Book recommendation failed", e);

@@ -18,7 +18,7 @@ interface AuthorsViewProps {
 
 const AuthorsView: React.FC<AuthorsViewProps> = ({ 
   authorPulses, 
-  bookStatuses,
+  bookStatuses = {}, // Default fallback
   authorFilter,
   authorSearchTerm = '',
   onUpdateAuthor, 
@@ -438,7 +438,7 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
                   <h4 className="text-[9px] font-bold uppercase tracking-[0.3em] text-sunset border-b border-sunset/10 pb-2">Recent Acquisitions</h4>
                   <div className="grid grid-cols-1 gap-3">
                     {author.releases.map((rel, idx) => {
-                      const status = bookStatuses[`${author.name}|${rel.title}`] || { read: false, wishlist: false };
+                      const status = (bookStatuses && bookStatuses[`${author.name}|${rel.title}`]) || { read: false, wishlist: false };
                       return (
                         <div key={idx} className="bg-sunset/5 border border-sunset/10 p-5 rounded-3xl flex justify-between items-start group/item hover:bg-sunset/10 transition-colors">
                           <div className="space-y-1 pr-4 flex-1">
@@ -488,7 +488,7 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
                   <h4 className="text-[9px] font-bold uppercase tracking-[0.3em] text-plum border-b border-plum/10 pb-2">The Canon</h4>
                   <div className="grid grid-cols-1 gap-3">
                     {author.bibliography.map((book, idx) => {
-                      const status = bookStatuses[`${author.name}|${book}`] || { read: false, wishlist: false };
+                      const status = (bookStatuses && bookStatuses[`${author.name}|${book}`]) || { read: false, wishlist: false };
                       return (
                         <div key={idx} className="bg-plum/5 border border-plum/10 p-5 rounded-3xl flex justify-between items-center group/item hover:bg-plum/10 transition-colors">
                           <div className="space-y-1 pr-4 flex-1">

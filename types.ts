@@ -81,6 +81,7 @@ export interface ArchiveState {
   books: Book[];
   shelves: Shelf[];
   authorPulses: Record<string, AuthorPulse>;
+  bookStatuses: Record<string, { read: boolean; wishlist: boolean }>; // Added missing field
   lexiconFavorites: string[]; // User defined trope favorites
   theme: Theme;
   authorFilter: AuthorFilterMode;
