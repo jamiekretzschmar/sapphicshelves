@@ -50,10 +50,11 @@ Run Sapphic Shelves natively on your Android device using the Termux terminal em
    echo "API_KEY=your_actual_gemini_api_key_here" > .env
    ```
 5. **Launch Protocol:**
+   Use the dedicated Android script to launch the system browser via `termux-open-url`:
    ```bash
-   npm run dev
+   npm run dev:android
    ```
-6. **Access:** Open your mobile browser and navigate to `http://localhost:5173`.
+6. **Access:** The application will automatically open in your default mobile browser (e.g., Chrome, Firefox).
 
 ## 🤝 Contributing
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
