@@ -183,7 +183,8 @@
       transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .fab:active { transform: scale(0.9); }
-<style>
+
+,<style>
   /* 1. Define High-Contrast Colors */
   :root {
     /* Default (Sepia/Light) */
@@ -218,38 +219,6 @@
   }
 
   /* 3. Navigation Fix */
-  nav, .bottom-nav {
-    margin-bottom: env(safe-area-inset-bottom);
-  }
-</style>
-  /* 1. Define High-Contrast Colors */
-  :root {
-    /* Default (Sepia/Light): Darker text for readability */
-    --rgb-ink: 20 20 20; /* Almost pure black (was likely lighter grey/brown) */
-    --rgb-parchment: 240 238 230; /* Your existing background */
-  }
-
-  [data-theme="dark"] {
-    /* Dark Mode: Lighter text for readability */
-    --rgb-ink: 235 235 235; /* Bright white-grey (was likely dimmer) */
-    --rgb-parchment: 1 29 77; /* Your Deep Brand Blue */
-  }
-
-  /* 2. Fix Safe Areas */
-  body {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-
-    /* THE FIX: Use Dynamic Height & Border Box */
-    height: 100dvh;        /* Fits the actual visible screen perfectly */
-    box-sizing: border-box; /* Makes sure Padding doesn't add extra height */
-    overflow: hidden;       /* OPTIONAL: Locks the page so it doesn't "bounce" */
-
-    /* Apply the colors */
-    color: rgb(var(--rgb-ink));
-    background-color: rgb(var(--rgb-parchment));
-  }
-
   nav, .bottom-nav {
     margin-bottom: env(safe-area-inset-bottom);
   }
