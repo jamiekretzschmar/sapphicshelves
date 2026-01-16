@@ -210,13 +210,17 @@
     --rgb-parchment: 1 29 77; /* Your Deep Brand Blue */
   }
 
-  /* 2. Fix Safe Areas (Keep this!) */
+  /* 2. Fix Safe Areas */
   body {
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
-    min-height: 100vh;
-    
-    /* Apply the colors using Tailwind's method */
+
+    /* THE FIX: Use Dynamic Height & Border Box */
+    height: 100dvh;        /* Fits the actual visible screen perfectly */
+    box-sizing: border-box; /* Makes sure Padding doesn't add extra height */
+    overflow: hidden;       /* OPTIONAL: Locks the page so it doesn't "bounce" */
+
+    /* Apply the colors */
     color: rgb(var(--rgb-ink));
     background-color: rgb(var(--rgb-parchment));
   }
