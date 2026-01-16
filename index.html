@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#E4DFDA" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#011D4D" media="(prefers-color-scheme: dark)">
   <title>Sapphic Shelves | Android Archive</title>
@@ -196,6 +196,36 @@
     }
   }
   </script>
+<style>
+  /* 1. Define High-Contrast Colors */
+  :root {
+    /* Default (Sepia/Light): Darker text for readability */
+    --rgb-ink: 20 20 20; /* Almost pure black (was likely lighter grey/brown) */
+    --rgb-parchment: 240 238 230; /* Your existing background */
+  }
+
+  [data-theme="dark"] {
+    /* Dark Mode: Lighter text for readability */
+    --rgb-ink: 235 235 235; /* Bright white-grey (was likely dimmer) */
+    --rgb-parchment: 1 29 77; /* Your Deep Brand Blue */
+  }
+
+  /* 2. Fix Safe Areas (Keep this!) */
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    min-height: 100vh;
+    
+    /* Apply the colors using Tailwind's method */
+    color: rgb(var(--rgb-ink));
+    background-color: rgb(var(--rgb-parchment));
+  }
+
+  nav, .bottom-nav {
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+</style>
+
 </head>
 <body class="antialiased">
   <div id="root" style="width: 100%; height: 100%; display: flex; justify-content: center;"></div>
