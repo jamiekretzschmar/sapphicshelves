@@ -2,8 +2,8 @@
 import React from 'react';
 
 export const COLORS = {
-  parchment: '#E4DFDA',
-  ink: '#011D4D',
+  parchment: '# e8e7dc',
+  ink:  '#7B3A1E',
   gold: '#1282A2',
   rose: '#034078',
   plum: '#63372C',
