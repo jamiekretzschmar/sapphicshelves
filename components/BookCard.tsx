@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Book, BookStatus, Shelf } from '../types';
 import { useHaptics } from '../hooks/useHaptics';
@@ -44,12 +43,19 @@ const BookCard: React.FC<BookCardProps> = ({
   }, [isMenuOpen]);
 
   // Generative color based on title string hash
+  // UPDATED: Using Calming Desaturated Rainbow Palette
   const getCoverColor = (str: string) => {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       hash = str.charCodeAt(i) + ((hash << 5) - hash);
     }
-    const colors = ['#011D4D', '#034078', '#1282A2', '#63372C', '#9A463D', '#4A9EA6'];
+    const colors = [
+      '#ba6b6b', // Red
+      '#d4a576', // Orange
+      '#e7df8e', // Yellow
+      '#85c183', // Green
+      '#6574bf'  // Blue
+    ];
     const index = Math.abs(hash) % colors.length;
     return colors[index];
   };
@@ -68,7 +74,7 @@ const BookCard: React.FC<BookCardProps> = ({
   const getStatusConfig = (status: string) => {
     switch(status) {
       case 'reading': return { label: 'Reading', color: 'bg-gold/10 text-gold border-gold/20', dot: 'bg-gold' };
-      case 'read': return { label: 'Finished', color: 'bg-emerald-600/10 text-emerald-600 border-emerald-600/20', dot: 'bg-emerald-600' };
+      case 'read': return { label: 'Finished', color: 'bg-brand-cyan/10 text-brand-cyan border-brand-cyan/20', dot: 'bg-brand-cyan' };
       case 'dnf': return { label: 'DNF', color: 'bg-rose/10 text-rose border-rose/20', dot: 'bg-rose' };
       default: return { label: 'TBR', color: 'bg-ink/5 text-ink/60 border-ink/10', dot: 'bg-ink/30' };
     }
@@ -137,7 +143,7 @@ const BookCard: React.FC<BookCardProps> = ({
     <div className="relative mb-3 touch-pan-y">
       {/* Background Layers for Swipe Actions */}
       <div className={`absolute inset-0 rounded-2xl flex items-center justify-between px-6 transition-colors ${
-        dragX > 0 ? 'bg-emerald-500' : dragX < 0 ? 'bg-gold' : 'bg-transparent'
+        dragX > 0 ? 'bg-brand-cyan' : dragX < 0 ? 'bg-gold' : 'bg-transparent'
       }`}>
         <span className={`text-parchment font-black uppercase tracking-widest text-xs flex items-center gap-2 ${dragX > 0 ? 'opacity-100' : 'opacity-0'}`}>
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
@@ -188,8 +194,8 @@ const BookCard: React.FC<BookCardProps> = ({
                  <button onClick={(e) => { e.stopPropagation(); handleQuickStatus('reading'); }} className="text-left px-4 py-2 text-xs hover:bg-gold/10 hover:text-gold transition-colors flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-gold" /> Reading
                  </button>
-                 <button onClick={(e) => { e.stopPropagation(); handleQuickStatus('read'); }} className="text-left px-4 py-2 text-xs hover:bg-emerald-500/10 hover:text-emerald-600 transition-colors flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" /> Finished
+                 <button onClick={(e) => { e.stopPropagation(); handleQuickStatus('read'); }} className="text-left px-4 py-2 text-xs hover:bg-brand-cyan/10 hover:text-brand-cyan transition-colors flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-brand-cyan" /> Finished
                  </button>
                  <button onClick={(e) => { e.stopPropagation(); handleQuickStatus('tbr'); }} className="text-left px-4 py-2 text-xs hover:bg-ink/5 hover:text-ink transition-colors flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-ink/30" /> TBR

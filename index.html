@@ -1,16 +1,17 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#E4DFDA" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#011D4D" media="(prefers-color-scheme: dark)">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#BFB5B2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1E1E23" media="(prefers-color-scheme: dark)">
   <title>Sapphic Shelves | Android Archive</title>
+  
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Sanchez:ital@0;1&display=swap" rel="stylesheet"> 
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Inter:wght@100..900&display=swap" rel="stylesheet">
+
   <script>
     tailwind.config = {
       darkMode: ['class', '[data-theme="dark"]'],
@@ -20,217 +21,111 @@
             parchment: 'rgb(var(--rgb-parchment) / <alpha-value>)',
             ink: 'rgb(var(--rgb-ink) / <alpha-value>)',
             'mica-surface': 'rgb(var(--rgb-mica) / <alpha-value>)',
-            brand: {
-              deep: '#011D4D',
-              cyan: '#1282A2',
-              glow: '#4A9EA6',
-            },
-            plum: '#63372C',
-            rose: '#D1345B',
-            gold: '#C5A028',
-            sunset: '#9A463D',
-            md: {
-              sys: {
-                primary: 'rgb(var(--rgb-primary) / <alpha-value>)',
-                surface: 'rgb(var(--rgb-parchment) / <alpha-value>)',
-                onSurface: 'rgb(var(--rgb-ink) / <alpha-value>)',
-              }
-            }
-},
+            primary: 'rgb(var(--rgb-primary) / <alpha-value>)',
+            // Earth Rainbow
+            rose: 'rgb(var(--rgb-rose) / <alpha-value>)',
+            gold: 'rgb(var(--rgb-gold) / <alpha-value>)',
+            peach: 'rgb(var(--rgb-peach) / <alpha-value>)',
+            moss: 'rgb(var(--rgb-moss) / <alpha-value>)',
+            plum: 'rgb(var(--rgb-plum) / <alpha-value>)',
+          },
           fontFamily: {
-          header: ['"DM Serif Display"', 'serif'],
-           sans: ['Inter', 'sans-serif'],
-
-          },
-          animation: {
-            'fade-in': 'fadeIn 0.5s ease-out',
-            'slide-up': 'slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-          },
-          keyframes: {
-            fadeIn: { '0%': { opacity: 0 }, '100%': { opacity: 1 } },
-            slideUp: { '0%': { transform: 'translateY(20px)', opacity: 0 }, '100%': { transform: 'translateY(0)', opacity: 1 } }
+            header: ['"Cormorant Garamond"', 'serif'],
+            sans: ['Inter', 'sans-serif'],
           }
         }
       }
     };
   </script>
+
   <style>
     :root {
-      /* LIGHT THEME */
-      --rgb-parchment: 188,201,207;
-      --rgb-ink: 54 69 79;
-      --rgb-mica: 218 227 223;
-      --rgb-primary: 134 133 117;
+      /* LIGHT THEME - Earth Tones */
+      --rgb-parchment: 191 181 178;
+      --rgb-ink: 45 42 38;
+      --rgb-mica: 255 255 255; 
+      --rgb-primary: 101 116 191; /* Muted Dusty Blue */
+      
+      --rgb-rose: 186 107 107;
+      --rgb-gold: 212 165 118;
+      --rgb-peach: 231 223 142;
+      --rgb-moss: 133 193 131;
+      --rgb-plum: 101 116 191;
     }
 
     [data-theme="dark"] {
-      /* DARK THEME */
-      --rgb-parchment: 5 10 20;
+      /* DARK THEME - Deep Earth */
+      --rgb-parchment: 30 30 35;
       --rgb-ink: 230 230 230;
-      --rgb-mica: 13 25 45;
-      --rgb-primary: 100 181 246;
+      --rgb-mica: 45 45 50; /* DARKER MICA FOR BUTTONS */
+      --rgb-primary: 133 193 131; /* Muted Moss Green */
     }
 
-    [data-theme="sepia"] {
-      /* SEPIA THEME */
-      --rgb-parchment: 236 228 217;
-      --rgb-ink: 60 45 35;
-      --rgb-mica: 245 238 225;
-      --rgb-primary: 140 70 30;
-    }
-    
     html, body {
       height: 100%;
-      overflow: hidden; /* Prevent body scroll, let React app handle it */
-    }
-    
-    body {
-09
-      background-color: rgb(var(--rgb-parchment)); /* Match app bg to hide letters boxing */
-      display: flex;
-      align-items: center;
-      justify-content: center;
       margin: 0;
-      font-family: 'Instrument Sans', sans-serif;
-      overscroll-behavior-y: none;
-      touch-action: manipulation;
-      -webkit-tap-highlight-color: transparent;
+      padding: 0;
+      overflow: hidden;
+      background-color: rgb(var(--rgb-parchment));
+      font-family: 'Inter', sans-serif;
+      /* Prevents blue highlight on Android taps */
+      -webkit-tap-highlight-color: transparent; 
     }
 
-    /* Android Device Shell - DESKTOP ONLY */
+    /* BOLDER SEARCH BAR */
+    input[type="text"], input[type="search"] {
+      border: 2.5px solid rgb(var(--rgb-primary)) !important;
+      background-color: rgba(var(--rgb-mica), 0.6) !important;
+      border-radius: 12px !important;
+      padding: 12px !important;
+      font-weight: 500;
+    }
+
+    /* DARKENED UNFILTERED BUTTONS */
+    .filter-btn:not(.active), button:not([class*="bg-primary"]) {
+      background-color: rgb(var(--rgb-mica)) !important;
+      color: rgb(var(--rgb-ink)) !important;
+      border: 1px solid rgba(var(--rgb-ink), 0.1) !important;
+      opacity: 0.9;
+    }
+
     .android-device {
-      width: 100%;
-      height: 100%;
-      position: relative;
+      width: 100vw;
+      height: 100dvh;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
       background: rgb(var(--rgb-parchment));
-      /* Create new stacking context for fixed children to contain them */
-      transform: translateZ(0); 
-    }
-    
-    @media (min-width: 481px) {
-      body {
-        background-color: #111;
-      }
-      .android-device {
-        height: 850px;
-        width: 400px; /* More realistic phone width */
-        border-radius: 40px;
-        border: 12px solid #333;
-        box-shadow: 0 0 50px rgba(0,0,0,0.5);
-      }
-      /* Hide scrollbar on desktop wrapper for cleanliness */
-      .android-device ::-webkit-scrollbar {
-        display: none;
-      }
     }
 
-    .screen {
-      flex: 1;
-      background-color: rgb(var(--parchment));
-      color: rgb(var(--rgb-parchment));
-      overflow: hidden;
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      /* Safe area padding handled in Layout.tsx via inline styles to avoid double padding */
+    /* Elegant Book Headers */
+    h1, h2, h3, .font-header {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 600;
+      letter-spacing: -0.01em;
     }
- 
+
     .scroll-container {
       flex: 1;
       overflow-y: auto;
-      overflow-x: hidden;
-      scroll-behavior: smooth;
-      -webkit-overflow-scrolling: touch;
-      overscroll-behavior-y: contain; /* Prevents pull-to-refresh */
-      padding-bottom: 100px;
+      padding-bottom: 120px; /* Space for Nav */
+      padding-top: env(safe-area-inset-top);
     }
-    
-    /* Navigation */
+
     .bottom-nav {
-      position: absolute;
+      position: fixed;
       bottom: 0;
-      left: 0;
-      right: 0;
-      height: calc(70px + env(safe-area-inset-bottom)); /* Reduced height */
-      background: rgba(var(parchment), 0.3);
-      backdrop-filter: blur(1px);
-      -webkit-backdrop-filter: blur: 4px);
-      border-top: 30px solid rgba(var(--rgb-deep), 0.20);
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-around;
-      padding-top: 10px;
-      padding-bottom: env(safe-area-inset-bottom);
-      z-index: 50;
+      width: 100%;
+      height: calc(70px + env(safe-area-inset-bottom));
+      background: rgba(var(--rgb-parchment), 0.95);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(var(--rgb-ink), 0.1);
+      z-index: 100;
     }
-
-    /* Floating Action Button */
-    .fab {
-      position: absolute;
-      bottom: calc(85px + env(safe-area-inset-bottom));
-      right: 20px;
-      width: 56pxw
-      height: 56px;
-      border-radius: 20px;
-      background: rgb(var(--rgb-ink));
-      color: rgb(var(--rgb-parchment));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-      z-index: 60;
-      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    .fab:active { transform: scale(0.9); }
-
-,<style>
-  /* 1. Define High-Contrast Colors */
-  :root {
-    /* Default (Sepia/Light) */
-    --rgb-ink: 20 20 20;       /* Almost pure black */
-    --rgb-parchment: 227 227 230; 
-  }
-
-  [data-theme="dark"] {
-    /* Dark Mode */
-    --rgb-ink: 235 235 235;    /* Bright white */
-    --rgb-parchment: 1 29 77; 
-  }
-
-  /* 2. The "Perfect Fit" Logic */
-  body {
-    /* Dynamic Height: Fits the actual visible screen (minus system bars) */
-    height: 100dvh;
-    
-    /* Border-Box: Ensures padding doesn't stretch the screen */
-    box-sizing: border-box;
-    
-    /* Lock: Prevents the "bounce" scroll effect */
-    overflow: hidden;
-
-    /* Safe Area Padding */
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    
-    /* Colors */
-    color: rgb(var(--deep));
-    background-color: rgb(var(--rgb-parchment));
-  }
-
-  /* 3. Navigation Fix */
-  nav, .bottom-nav {
-    margin-bottom: env(safe-area-inset-bottom);
-  }
-</style>
-
+  </style>
 </head>
 <body class="antialiased">
-  <div id="root" style="width: 100%; height: 100%; display: flex; justify-content: center;"></div>
+  <div id="root" class="android-device"></div>
   <script type="module" src="/index.tsx"></script>
 </body>
 </html>
-
 

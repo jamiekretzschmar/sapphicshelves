@@ -1,16 +1,15 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#E4DFDA" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#011D4D" media="(prefers-color-scheme: dark)">
   <title>Sapphic Shelves | Android Archive</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400;1,600&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Sanchez:ital@0;1&display=swap" rel="stylesheet">
   <script>
     tailwind.config = {
       darkMode: ['class', '[data-theme="dark"]'],
@@ -20,15 +19,25 @@
             parchment: 'rgb(var(--rgb-parchment) / <alpha-value>)',
             ink: 'rgb(var(--rgb-ink) / <alpha-value>)',
             'mica-surface': 'rgb(var(--rgb-mica) / <alpha-value>)',
+
+            // UPDATED PALETTE: Calming Desaturated Rainbow
             brand: {
-              deep: '#011D4D',
-              cyan: '#1282A2',
-              glow: '#4A9EA6',
+              deep: '#6574bf',   // Blue (Replacing Dark Blue)
+              cyan: '#85c183',   // Green (Replacing Cyan)
+              glow: '#e7df8e',   // Yellow
             },
-            plum: '#63372C',
-            rose: '#D1345B',
-            gold: '#C5A028',
-            sunset: '#9A463D',
+            rose: '#ba6b6b',     // Red
+            gold: '#d4a576',     // Orange (Used for stars/accents)
+            plum: '#6574bf',     // Blue (Mapped to Deep)
+            sunset: '#ba6b6b',   // Red
+
+            // Specific Palette Reference
+            'calm-red': '#EB7171',
+            'calm-orange': '#F0B965',
+            'calm-yellow': '#FFF68A',
+            'calm-green': '#9FBFA3',
+            'calm-blue': '#A3CDD9',
+
             md: {
               sys: {
                 primary: 'rgb(var(--rgb-primary) / <alpha-value>)',
@@ -38,8 +47,8 @@
             }
           },
           fontFamily: {
-            header: ['Cormorant Garamond', 'serif'],
-            sans: ['Instrument Sans', 'sans-serif'],
+              header: ['"DM Serif Display"', 'serif'],
+               sans: ['Inter', 'sans-serif'],
           },
           animation: {
             'fade-in': 'fadeIn 0.5s ease-out',
@@ -56,46 +65,45 @@
   <style>
     :root {
       /* LIGHT THEME */
-      --rgb-parchment: 242 240 236;
-      --rgb-ink: 10 25 47;
+      --rgb-parchment: #9FBFA3;
+      --rgb-ink: 31 31 12;
       --rgb-mica: 255 255 255;
-      --rgb-primary: 3 64 120;
+      --rgb-primary: #9fbfa3; /* Matches calm-blue */
     }
 
     [data-theme="dark"] {
       /* DARK THEME */
-      --rgb-parchment: 5 10 20;
+      --rgb-parchment: 30 30 35;
       --rgb-ink: 230 230 230;
-      --rgb-mica: 13 25 45;
-      --rgb-primary: 100 181 246;
+      --rgb-mica: 45 45 50;
+      --rgb-primary: 133 193 131; /* Matches calm-green */
     }
 
     [data-theme="sepia"] {
       /* SEPIA THEME */
       --rgb-parchment: 236 228 217;
-      --rgb-ink: 60 45 35;
+      --rgb-ink: 90 70 60;
       --rgb-mica: 245 238 225;
-      --rgb-primary: 140 70 30;
+      --rgb-primary: 212 165 118; /* Matches calm-orange */
     }
-    
+
     html, body {
       height: 100%;
-      overflow: hidden; /* Prevent body scroll, let React app handle it */
+      overflow: hidden;
     }
-    
+
     body {
-      background-color: rgb(var(--rgb-parchment)); /* Match app bg to hide letters boxing */
+      background-color: rgb(var(--rgb-primary));
       display: flex;
       align-items: center;
       justify-content: center;
       margin: 0;
-      font-family: 'Instrument Sans', sans-serif;
+      font-family: 'Inter', sans-serif;
       overscroll-behavior-y: none;
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* Android Device Shell - DESKTOP ONLY */
     .android-device {
       width: 100%;
       height: 100%;
@@ -103,23 +111,21 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      background: rgb(var(--rgb-parchment));
-      /* Create new stacking context for fixed children to contain them */
-      transform: translateZ(0); 
+      background: rgb(var(calm-blue));
+      transform: translateZ(0);
     }
-    
+
     @media (min-width: 481px) {
       body {
         background-color: #111;
       }
       .android-device {
         height: 850px;
-        width: 400px; /* More realistic phone width */
-        border-radius: 40px;
-        border: 8px solid #333;
-        box-shadow: 0 0 50px rgba(0,0,0,0.5);
+        width: 400px;
+        border-radius: 65px;
+        border: 12px solid #333;
+        box-shadow: 0 0 120px rgba(192,5,12,0.9);
       }
-      /* Hide scrollbar on desktop wrapper for cleanliness */
       .android-device ::-webkit-scrollbar {
         display: none;
       }
@@ -127,13 +133,12 @@
 
     .screen {
       flex: 1;
-      background-color: rgb(var(--rgb-parchment));
+      background-color: rgb(var(--rgb-primary));
       color: rgb(var(--rgb-ink));
       overflow: hidden;
       position: relative;
       display: flex;
       flex-direction: column;
-      /* Safe area padding handled in Layout.tsx via inline styles to avoid double padding */
     }
 
     .scroll-container {
@@ -142,20 +147,19 @@
       overflow-x: hidden;
       scroll-behavior: smooth;
       -webkit-overflow-scrolling: touch;
-      overscroll-behavior-y: contain; /* Prevents pull-to-refresh */
+      overscroll-behavior-y: contain;
       padding-bottom: 100px;
     }
-    
-    /* Navigation */
+
     .bottom-nav {
       position: absolute;
       bottom: 0;
       left: 0;
       right: 0;
-      height: calc(70px + env(safe-area-inset-bottom)); /* Reduced height */
-      background: rgba(var(--rgb-parchment), 0.9);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      height: calc(70px + env(safe-area-inset-bottom));
+      background: rgba(var(--204 229 255), 0.9);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
       border-top: 1px solid rgba(var(--rgb-ink), 0.05);
       display: flex;
       align-items: flex-start;
@@ -165,7 +169,6 @@
       z-index: 50;
     }
 
-    /* Floating Action Button */
     .fab {
       position: absolute;
       bottom: calc(85px + env(safe-area-inset-bottom));
@@ -173,8 +176,8 @@
       width: 56px;
       height: 56px;
       border-radius: 20px;
-      background: rgb(var(--rgb-primary));
-      color: rgb(var(--rgb-parchment));
+      background: #9FBFA3; /* calm-blue */
+      color: #8CC5CF;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -184,22 +187,9 @@
     }
     .fab:active { transform: scale(0.9); }
   </style>
-
-  <script type="importmap">
-  {
-    "imports": {
-      "@google/genai": "https://esm.sh/@google/genai@^1.36.0",
-      "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
-      "vite": "https://esm.sh/vite@^7.3.1",
-      "react/": "https://esm.sh/react@^19.2.3/",
-      "react": "https://esm.sh/react@^19.2.3",
-      "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
-    }
-  }
-  </script>
-  <script type="module" crossorigin src="/assets/index-2C6jRXc_.js"></script>
 </head>
 <body class="antialiased">
   <div id="root" style="width: 100%; height: 100%; display: flex; justify-content: center;"></div>
+  <script type="module" src="/index.tsx"></script>
 </body>
 </html>
