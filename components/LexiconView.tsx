@@ -32,7 +32,6 @@ const LexiconView: React.FC<LexiconViewProps> = ({
   onAcquireBook, 
   onAddFavorite,
   onRemoveFavorite,
-  canadianFocus,
   startTask,
   endTask
 }) => {

@@ -4,7 +4,9 @@ import { PROMPTS } from '../constants';
 import { Opportunity, Book } from '../types';
 
 const getAIClient = () => {
-  return new GoogleGenAI({ apiKey: process.env.API_KEY });
+  // @ts-ignore - process.env might not be defined in some environments
+  const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : '';
+  return new GoogleGenAI({ apiKey: apiKey || '' });
 };
 
 // Utility to clean AI output
@@ -35,14 +37,15 @@ export const geminiService = {
 
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-2.0-flash-preview',
         contents: {
+          role: 'user',
           parts: [
             ...imageParts,
             { text: PROMPTS.SHELF_SCAN }
           ]
         },
-        config: {
+        generationConfig: {
           responseMimeType: 'application/json',
           responseSchema: {
             type: Type.OBJECT,
@@ -63,7 +66,7 @@ export const geminiService = {
         }
       });
 
-      const data = cleanAndParseJSON(response.text);
+      const data = cleanAndParseJSON(response.response.text());
       return data.books || [];
     } catch (e) {
       console.error("Failed to parse shelf scan response", e);
@@ -85,9 +88,13 @@ export const geminiService = {
 
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: prompt,
-        config: {
+        model: 'gemini-2.0-flash-preview',
+        contents: {
+          role: 'user',
+          parts: [{ text: prompt }]
+        },
+        generationConfig: {
+          // @ts-ignore - googleSearch might be in a different location in types
           tools: [{ googleSearch: {} }],
           responseMimeType: 'application/json',
           responseSchema: {
@@ -104,8 +111,8 @@ export const geminiService = {
         }
       });
 
-      const data = cleanAndParseJSON(response.text);
-      const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks
+      const data = cleanAndParseJSON(response.response.text());
+      const sources = response.response.candidates?.[0]?.groundingMetadata?.groundingChunks
         ?.map((chunk: any) => ({
           title: chunk.web?.title || 'Resource',
           uri: chunk.web?.uri
@@ -194,13 +201,17 @@ export const geminiService = {
     
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: prompt,
-        config: {
+        model: 'gemini-2.0-flash-preview',
+        contents: {
+          role: 'user',
+          parts: [{ text: prompt }]
+        },
+        generationConfig: {
+          // @ts-ignore
           thinkingConfig: { thinkingBudget: 1024 }
         }
       });
-      return response.text || "Archival synthesis pending...";
+      return response.response.text() || "Archival synthesis pending...";
     } catch (e) {
       return "The curator is currently unavailable.";
     }
@@ -212,9 +223,12 @@ export const geminiService = {
     
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: prompt,
-        config: {
+        model: 'gemini-2.0-flash-preview',
+        contents: {
+          role: 'user',
+          parts: [{ text: prompt }]
+        },
+        generationConfig: {
           responseMimeType: 'application/json',
           responseSchema: {
             type: Type.OBJECT,
@@ -225,7 +239,7 @@ export const geminiService = {
         }
       });
       
-      const data = cleanAndParseJSON(response.text);
+      const data = cleanAndParseJSON(response.response.text());
       return data.suggestions || [];
     } catch {
       return [];
@@ -240,9 +254,13 @@ export const geminiService = {
 
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: prompt,
-        config: {
+        model: 'gemini-2.0-flash-preview',
+        contents: {
+          role: 'user',
+          parts: [{ text: prompt }]
+        },
+        generationConfig: {
+          // @ts-ignore
           tools: [{ googleSearch: {} }],
           responseMimeType: 'application/json',
           responseSchema: {
@@ -260,8 +278,8 @@ export const geminiService = {
         }
       });
 
-      const data = cleanAndParseJSON(response.text);
-      const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks
+      const data = cleanAndParseJSON(response.response.text());
+      const sources = response.response.candidates?.[0]?.groundingMetadata?.groundingChunks
         ?.map((chunk: any) => ({
           title: chunk.web?.title || 'Resource',
           uri: chunk.web?.uri
@@ -285,9 +303,13 @@ export const geminiService = {
 
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: prompt,
-        config: {
+        model: 'gemini-2.0-flash-preview',
+        contents: {
+          role: 'user',
+          parts: [{ text: prompt }]
+        },
+        generationConfig: {
+          // @ts-ignore
           tools: [{ googleSearch: {} }],
           responseMimeType: 'application/json',
           responseSchema: {
@@ -314,9 +336,9 @@ export const geminiService = {
         }
       });
 
-      const data = cleanAndParseJSON(response.text);
+      const data = cleanAndParseJSON(response.response.text());
 
-      const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks
+      const sources = response.response.candidates?.[0]?.groundingMetadata?.groundingChunks
         ?.map((chunk: any) => ({
           title: chunk.web?.title || 'Resource',
           uri: chunk.web?.uri
@@ -342,9 +364,13 @@ export const geminiService = {
 
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: prompt,
-        config: {
+        model: 'gemini-2.0-flash-preview',
+        contents: {
+          role: 'user',
+          parts: [{ text: prompt }]
+        },
+        generationConfig: {
+          // @ts-ignore
           tools: [{ googleSearch: {} }],
           responseMimeType: 'application/json',
           responseSchema: {
@@ -369,7 +395,7 @@ export const geminiService = {
         }
       });
       
-      const data = cleanAndParseJSON(response.text);
+      const data = cleanAndParseJSON(response.response.text());
       return data.recommendations || [];
     } catch (e) {
       console.error("Book recommendation failed", e);

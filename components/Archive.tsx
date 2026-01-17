@@ -90,7 +90,7 @@ const Archive: React.FC<ArchiveProps> = ({
 
   const handleBulkShelf = (shelfId: string) => {
     if (onBulkUpdate) {
-      onBulkUpdate(Array.from(selectedIds), { shelfId: shelfId || undefined });
+      onBulkUpdate(Array.from(selectedIds), { shelfId: shelfId || null });
       setIsSelectionMode(false);
       setSelectedIds(new Set());
     }
