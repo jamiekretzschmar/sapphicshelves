@@ -2,13 +2,14 @@
 import React from 'react';
 
 export const COLORS = {
-  parchment: '#E4DFDA',
-  ink: '#011D4D',
-  gold: '#1282A2',
-  rose: '#034078',
+  parchment: '#dcedfc',
+  ink: '#334e68',
+  gold: '#9fcbd9',
+  rose: '#D1345B',
   plum: '#63372C',
-  sunset: '#63372C',
-  peach: '#1282A2',
+  sunset: '#9A463D',
+  peach: '#5691a4',
+  neutral: '#b9bfc1'
 };
 
 export const ICONS = {

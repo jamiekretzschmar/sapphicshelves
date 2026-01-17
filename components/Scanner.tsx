@@ -2,14 +2,17 @@
 import React, { useState, useRef } from 'react';
 import { geminiService } from '../services/gemini';
 import { compressImage } from '../utils/image';
+import { Book } from '../types';
+import { CoverMatcher } from '../services/CoverMatcher';
 
 interface ScannerProps {
   onBooksFound: (books: any[]) => void;
   onScanningStateChange: (scanning: boolean) => void;
   onKeyError: () => void;
+  existingBooks: Book[];
 }
 
-const Scanner: React.FC<ScannerProps> = ({ onBooksFound, onScanningStateChange, onKeyError }) => {
+const Scanner: React.FC<ScannerProps> = ({ onBooksFound, onScanningStateChange, onKeyError, existingBooks }) => {
   const [previews, setPreviews] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorStatus, setErrorStatus] = useState<'NONE' | 'KEY_REVOKED' | 'GENERAL'>('NONE');
@@ -57,7 +60,24 @@ const Scanner: React.FC<ScannerProps> = ({ onBooksFound, onScanningStateChange, 
 
     try {
       const foundBooks = await geminiService.scanShelf(previews);
-      onBooksFound(foundBooks);
+      
+      // Duplicate Detection
+      const filteredBooks = foundBooks.filter(newBook => {
+        const duplicate = existingBooks.find(b => 
+          CoverMatcher.calculateMatchScore(b, newBook) > 85
+        );
+        if (duplicate) {
+           console.log(`Duplicate skipped: ${newBook.title} matches ${duplicate.title}`);
+           return false;
+        }
+        return true;
+      });
+
+      if (filteredBooks.length < foundBooks.length) {
+         alert(`${foundBooks.length - filteredBooks.length} duplicate volumes ignored.`);
+      }
+
+      onBooksFound(filteredBooks);
       setPreviews([]);
     } catch (error: any) {
       console.error("Scan failed", error);
@@ -74,7 +94,7 @@ const Scanner: React.FC<ScannerProps> = ({ onBooksFound, onScanningStateChange, 
   };
 
   const handleRotateKey = async () => {
-    if (typeof window.aistudio?.openSelectKey === 'function') {
+    if (window.aistudio?.openSelectKey) {
       await window.aistudio.openSelectKey();
       setErrorStatus('NONE');
     }

@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { AuthorPulse, AuthorFilterMode, Book } from '../types';
 import { geminiService } from '../services/gemini';
@@ -13,6 +14,7 @@ interface AuthorsViewProps {
   onSetAuthorFilter: (filter: AuthorFilterMode) => void;
   onSetAuthorSearchTerm: (term: string) => void;
   onAddAuthor: (name: string) => void;
+  onDeleteAuthor: (name: string) => void;
   libraryBooks: Book[];
 }
 
@@ -26,6 +28,7 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
   onSetAuthorFilter,
   onSetAuthorSearchTerm,
   onAddAuthor,
+  onDeleteAuthor,
   libraryBooks
 }) => {
   const [selectedNames, setSelectedNames] = useState<Set<string>>(new Set());
@@ -35,11 +38,23 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
   const [newAuthorName, setNewAuthorName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [expandedBios, setExpandedBios] = useState<Set<string>>(new Set());
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
   
   const [sortOrder, setSortOrder] = useState<'updated' | 'alpha'>('updated');
   const [showFreshOnly, setShowFreshOnly] = useState(false);
 
   const authors = useMemo(() => Object.values(authorPulses) as AuthorPulse[], [authorPulses]);
+
+  // Handle outside click to close menus
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (activeMenu && !(event.target as Element).closest('.author-menu-container')) {
+        setActiveMenu(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [activeMenu]);
 
   const potentialScribes = useMemo(() => {
     const libraryAuthors = new Set<string>(libraryBooks.map(b => b.author));
@@ -191,6 +206,13 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
     });
   };
 
+  const handleDelete = (name: string) => {
+      if(confirm(`Are you sure you want to stop tracking ${name}? This will remove their pulse history.`)) {
+          onDeleteAuthor(name);
+      }
+      setActiveMenu(null);
+  };
+
   return (
     <div className="space-y-8 pb-20 selection:bg-rose/10">
       {potentialScribes.length > 0 && authorFilter === 'all' && (
@@ -213,7 +235,7 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
         </section>
       )}
 
-      {/* Fresh Intelligence Banner - Removed duplicate block, handled below */}
+      {/* Fresh Intelligence Banner */}
 
       <section className="bg-mica-surface border border-ink/5 p-8 rounded-[2.5rem] shadow-sm space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -243,11 +265,20 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
                 onChange={(e) => onSetAuthorSearchTerm(e.target.value)}
                 className="w-full bg-ink/5 border border-ink/5 px-5 py-3.5 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-rose/20 transition-all italic pr-12 font-light"
               />
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-ink/20 group-focus-within:text-rose transition-colors">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
+              {authorSearchTerm ? (
+                <button 
+                  onClick={() => onSetAuthorSearchTerm('')}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-ink/30 hover:text-rose transition-colors"
+                >
+                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              ) : (
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-ink/20 group-focus-within:text-rose transition-colors">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+              )}
             </div>
             
             <div className="flex gap-2">
@@ -358,15 +389,40 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
                 <div className="space-y-2 flex-1 pr-4">
                   <div className="flex items-center gap-3 flex-wrap">
                     <h3 className="font-header text-4xl italic leading-none">{author.name}</h3>
-                    <button 
-                      onClick={(e) => { 
-                        e.stopPropagation(); 
-                        onUpdateAuthor(author.name, { isFavorite: !author.isFavorite }); 
-                      }}
-                      className={`transition-colors active:scale-125 ${author.isFavorite ? 'text-rose' : 'text-ink/10 hover:text-ink/30'}`}
-                    >
-                      <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-                    </button>
+                    
+                    {/* Quick Options Menu */}
+                    <div className="relative author-menu-container">
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === author.name ? null : author.name); }}
+                            className="p-1 rounded-full text-ink/20 hover:bg-ink/5 hover:text-ink transition-colors"
+                        >
+                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="12" r="2"/></svg>
+                        </button>
+                        
+                        {activeMenu === author.name && (
+                            <div className="absolute left-0 top-full mt-2 w-48 bg-parchment border border-ink/10 rounded-xl shadow-xl z-20 animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col py-1">
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); onUpdateAuthor(author.name, { isFavorite: !author.isFavorite }); setActiveMenu(null); }}
+                                    className="w-full text-left px-4 py-2 text-xs hover:bg-ink/5 flex items-center gap-2 text-ink"
+                                >
+                                    <span className={author.isFavorite ? 'text-rose' : 'text-ink/40'}>♥</span>
+                                    {author.isFavorite ? 'Unfavorite' : 'Add to Favorites'}
+                                </button>
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); syncAuthor(author.name); setActiveMenu(null); }}
+                                    className="w-full text-left px-4 py-2 text-xs hover:bg-ink/5 flex items-center gap-2 text-ink"
+                                >
+                                    <span>↻</span> Force Sync
+                                </button>
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); handleDelete(author.name); }}
+                                    className="w-full text-left px-4 py-2 text-xs hover:bg-rose/10 text-rose flex items-center gap-2 font-bold"
+                                >
+                                    <span>✕</span> Untrack Scribe
+                                </button>
+                            </div>
+                        )}
+                    </div>
                   </div>
                   
                   <div className="flex items-center gap-2">
@@ -418,111 +474,41 @@ const AuthorsView: React.FC<AuthorsViewProps> = ({
                     </p>
                     <button 
                       onClick={(e) => { e.stopPropagation(); toggleBio(author.name); }}
-                      className="mt-3 text-[9px] font-bold uppercase tracking-widest text-plum hover:text-rose transition-colors flex items-center gap-1"
+                      className="mt-3 text-[9px] font-bold uppercase tracking-widest text-ink/40 hover:text-brand-cyan transition-colors"
                     >
-                      {isBioExpanded ? 'Collapse Record' : 'Read Full Monograph'}
+                      {isBioExpanded ? 'Fold Abstract' : 'Expand Abstract'}
                     </button>
-                    {author.historicalContext && (
-                      <div className="mt-4 flex items-center gap-2 bg-rose/5 border border-rose/10 px-3 py-1.5 rounded-full w-fit">
-                        <span className="text-[8px] font-bold uppercase text-rose/60">Epoch:</span>
-                        <span className="text-[10px] italic font-semibold text-plum">{author.historicalContext}</span>
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
 
-              {/* Releases and Bibliography Logic Remains Similar - Ensure e.stopPropagation on inner buttons */}
+              {/* Author Releases */}
               {author.releases && author.releases.length > 0 && (
-                <div className="space-y-4 mb-8">
-                  <h4 className="text-[9px] font-bold uppercase tracking-[0.3em] text-sunset border-b border-sunset/10 pb-2">Recent Acquisitions</h4>
-                  <div className="grid grid-cols-1 gap-3">
-                    {author.releases.map((rel, idx) => {
-                      const status = (bookStatuses && bookStatuses[`${author.name}|${rel.title}`]) || { read: false, wishlist: false };
-                      return (
-                        <div key={idx} className="bg-sunset/5 border border-sunset/10 p-5 rounded-3xl flex justify-between items-start group/item hover:bg-sunset/10 transition-colors">
-                          <div className="space-y-1 pr-4 flex-1">
-                            <p className="text-sm font-bold italic text-ink/80">{rel.title}</p>
-                            
-                            <div className="flex items-center gap-3 mt-1">
-                              <span className="text-[10px] font-mono text-sunset font-bold">{formatDate(rel.releaseDate)}</span>
-                              {rel.isUpcoming ? (
-                                <span className="text-[7px] bg-gold text-parchment px-2 py-0.5 rounded-full font-black uppercase tracking-tighter shadow-sm">Expected</span>
-                              ) : (
-                                <span className="text-[7px] bg-emerald-600 text-parchment px-2 py-0.5 rounded-full font-black uppercase tracking-tighter shadow-sm opacity-60">Confirmed</span>
-                              )}
-                            </div>
-                            
-                            {rel.synopsis && (
-                               <p className="text-xs text-ink/60 mt-2 line-clamp-2 leading-relaxed italic border-l-2 border-sunset/20 pl-2">
-                                 {rel.synopsis}
-                               </p>
-                            )}
-                          </div>
-                          
-                          <div className="flex gap-2 shrink-0">
-                             <button 
-                              onClick={(e) => { e.stopPropagation(); onToggleBookStatus(author.name, rel.title, 'wishlist'); }} 
-                              className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${status.wishlist ? 'bg-rose text-parchment shadow-md' : 'bg-ink/5 text-ink/20 hover:text-ink/40'}`}
-                              title="Add to Wishlist"
-                             >
-                               <svg className="w-4 h-4" fill={status.wishlist ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-                             </button>
-                             <button 
-                              onClick={(e) => { e.stopPropagation(); onToggleBookStatus(author.name, rel.title, 'read'); }} 
-                              className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${status.read ? 'bg-emerald-500 text-parchment shadow-md' : 'bg-ink/5 text-ink/20 hover:text-ink/40'}`}
-                              title="Mark as Read"
-                             >
-                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                             </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {author.bibliography && author.bibliography.length > 0 && (
                 <div className="space-y-4">
-                  <h4 className="text-[9px] font-bold uppercase tracking-[0.3em] text-plum border-b border-plum/10 pb-2">The Canon</h4>
-                  <div className="grid grid-cols-1 gap-3">
-                    {author.bibliography.map((book, idx) => {
-                      const status = (bookStatuses && bookStatuses[`${author.name}|${book}`]) || { read: false, wishlist: false };
-                      return (
-                        <div key={idx} className="bg-plum/5 border border-plum/10 p-5 rounded-3xl flex justify-between items-center group/item hover:bg-plum/10 transition-colors">
-                          <div className="space-y-1 pr-4 flex-1">
-                            <p className="text-sm font-bold italic text-ink/80">{book}</p>
-                            <p className="text-[10px] font-mono text-plum/60 tracking-widest uppercase font-bold">Canon Record</p>
-                          </div>
-                          <div className="flex gap-2">
-                             <button 
-                              onClick={(e) => { e.stopPropagation(); onToggleBookStatus(author.name, book, 'wishlist'); }} 
-                              className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${status.wishlist ? 'bg-rose text-parchment shadow-md' : 'bg-ink/5 text-ink/20 hover:text-ink/40'}`}
-                             >
-                               <svg className="w-4 h-4" fill={status.wishlist ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-                             </button>
-                             <button 
-                              onClick={(e) => { e.stopPropagation(); onToggleBookStatus(author.name, book, 'read'); }} 
-                              className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${status.read ? 'bg-emerald-500 text-parchment shadow-md' : 'bg-ink/5 text-ink/20 hover:text-ink/40'}`}
-                             >
-                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                             </button>
-                          </div>
+                  <h4 className="text-[9px] font-bold uppercase tracking-[0.3em] text-ink/30 border-b border-ink/5 pb-2">Recent & Upcoming Inscriptions</h4>
+                  <div className="grid gap-3">
+                    {author.releases.slice(0, 3).map((release, i) => (
+                      <div key={i} className="bg-ink/5 p-4 rounded-xl flex justify-between items-center group/release hover:bg-ink hover:text-parchment transition-all">
+                        <div>
+                          <p className="font-header italic text-lg">{release.title}</p>
+                          <p className="text-[10px] uppercase tracking-widest opacity-60">{formatDate(release.releaseDate)}</p>
                         </div>
-                      );
-                    })}
+                        {release.isUpcoming && (
+                          <span className="px-3 py-1 bg-brand-cyan text-white text-[9px] font-black uppercase tracking-widest rounded-full">Upcoming</span>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
             </article>
           );
         }) : (
-          <div className="text-center py-32 bg-mica-surface rounded-[3rem] border border-dashed border-ink/10 opacity-30">
-            <p className="font-header text-3xl italic">
-              {authorSearchTerm ? 'No scribes found matching your query.' : 'Archival records are currently vacant.'}
-            </p>
-          </div>
+            <div className="py-20 text-center flex flex-col items-center opacity-50">
+                <span className="text-4xl mb-2">🪶</span>
+                <p className="text-xs font-bold uppercase tracking-widest text-ink/60">No scribes found.</p>
+                <button onClick={() => { onSetAuthorFilter('all'); onSetAuthorSearchTerm(''); }} className="mt-4 text-xs text-brand-cyan underline">Reset Filters</button>
+            </div>
         )}
       </div>
     </div>

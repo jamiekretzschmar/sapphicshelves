@@ -6,11 +6,29 @@ export type SortOption = 'date_desc' | 'date_asc' | 'title' | 'author' | 'rating
 
 export type TagState = 'include' | 'exclude' | 'neutral';
 
+declare global {
+  interface AIStudio {
+    openSelectKey: () => Promise<void>;
+    hasSelectedApiKey: () => Promise<boolean>;
+  }
+  interface Window {
+    aistudio?: AIStudio;
+  }
+}
+
 export interface Shelf {
   id: string;
   title: string;
   description?: string;
   isVirtual?: boolean;
+}
+
+export interface SeriesInfo {
+  name: string;
+  index: number;
+  total?: number;
+  isComplete: boolean;
+  nextBookTitle?: string;
 }
 
 export interface Book {
@@ -21,18 +39,18 @@ export interface Book {
   coverUrl?: string;
   publicationYear?: number;
   tropes?: string[];
-  userTags?: string[]; // Manual tags
+  userTags?: string[];
   synopsis?: string;
   scannedAt: string;
   shelfId?: string | null;
   isCanadian?: boolean;
   
-  // Metacognition
+  // Metacognition & AI Analysis
   status: BookStatus;
-  rating?: number; // 0-5
+  rating?: number;
   userNotes?: string;
-  startedAt?: string;
-  finishedAt?: string;
+  series?: SeriesInfo; // NEW: Series Gap Detection
+  moodColor?: string; // NEW: AI Vibe Matching
   
   metadata?: {
     publisher?: string;
@@ -59,7 +77,6 @@ export interface AuthorPulse {
   isFavorite?: boolean;
 }
 
-// --- Zero-Failure Opportunity Discriminated Unions ---
 export type OpportunityType = 'Arc' | 'Contest' | 'Free Book';
 
 export interface Opportunity {
@@ -69,7 +86,7 @@ export interface Opportunity {
   category: OpportunityType;
   description: string;
   source_link: string;
-  timestamp: string; // ISO8601
+  timestamp: string;
   validity_score?: number;
 }
 
@@ -78,13 +95,20 @@ export interface SystemTask {
   label: string;
 }
 
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  relatedBookId?: string;
+}
+
 export interface ArchiveState {
   version: string;
   books: Book[];
   shelves: Shelf[];
   authorPulses: Record<string, AuthorPulse>;
-  bookStatuses: Record<string, { read: boolean; wishlist: boolean }>; // Added missing field
-  lexiconFavorites: string[]; // User defined trope favorites
+  bookStatuses: Record<string, { read: boolean; wishlist: boolean }>;
+  lexiconFavorites: string[];
   theme: Theme;
   authorFilter: AuthorFilterMode;
   authorSearchTerm: string;

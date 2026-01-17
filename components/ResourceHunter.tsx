@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Opportunity } from '../types';
-import { resourceHunterService } from '../services/resourceService';
+import { geminiService } from '../services/gemini';
 import { useHaptics } from '../hooks/useHaptics';
 import ResourceCard from './ResourceCard';
 
@@ -28,7 +28,7 @@ export default function ResourceHunter() {
     
     try {
       const currentOffset = isLoadMore ? offset + BATCH_LIMIT : 0;
-      const batch = await resourceHunterService.discoverResources({ 
+      const batch = await geminiService.discoverResources({ 
         query, 
         offset: currentOffset,
         limit: BATCH_LIMIT 

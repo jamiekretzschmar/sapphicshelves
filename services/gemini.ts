@@ -1,19 +1,18 @@
 
-import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { PROMPTS } from '../constants';
+import { Opportunity, Book } from '../types';
 
 const getAIClient = () => {
   return new GoogleGenAI({ apiKey: process.env.API_KEY });
 };
 
-// Utility to clean AI output which often includes markdown code blocks despite schema constraints
-const cleanAndParseJSON = (text: string | undefined): any => {
+// Utility to clean AI output
+export const cleanAndParseJSON = (text: string | undefined): any => {
   if (!text) return {};
   try {
-    // Attempt direct parse
     return JSON.parse(text);
   } catch (e) {
-    // Remove markdown code blocks if present
     const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
     try {
       return JSON.parse(cleaned);
@@ -75,7 +74,8 @@ export const geminiService = {
   async enrichBook(title: string, author: string): Promise<any> {
     const ai = getAIClient();
     const prompt = `Find the ISBN-13, the primary publication year (number), a 2-sentence synopsis, and 3-5 primary tropes for the book "${title}" by ${author}. 
-    Focus on its significance in queer/sapphic literature. Use Google Search to verify data.
+    Focus on its significance in queer/sapphic literature.
+    Also, determine a "Mood Color" (hex code) that fits the book's vibe (e.g. dark red for gothic, pastel for rom-com).
     
     COVER IMAGE PROTOCOL:
     1. Find the accurate ISBN-13.
@@ -97,7 +97,8 @@ export const geminiService = {
               publicationYear: { type: Type.NUMBER },
               synopsis: { type: Type.STRING },
               coverUrl: { type: Type.STRING },
-              tropes: { type: Type.ARRAY, items: { type: Type.STRING } }
+              tropes: { type: Type.ARRAY, items: { type: Type.STRING } },
+              moodColor: { type: Type.STRING }
             }
           }
         }
@@ -115,6 +116,75 @@ export const geminiService = {
     } catch (e) {
       console.error("Enrichment failed", e);
       return {};
+    }
+  },
+
+  // NEW: Feature 2 - Series Gap Detection
+  async analyzeSeries(title: string, author: string): Promise<any> {
+    const ai = getAIClient();
+    const prompt = `Is the book "${title}" by ${author} part of a series? 
+    If yes, return the series name, index (e.g. 1 for first book), and the title of the next book.
+    If it is a standalone, return null for name.
+    Return JSON.`;
+
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: prompt,
+        config: {
+          tools: [{ googleSearch: {} }],
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              name: { type: Type.STRING },
+              index: { type: Type.NUMBER },
+              total: { type: Type.NUMBER },
+              isComplete: { type: Type.BOOLEAN },
+              nextBookTitle: { type: Type.STRING }
+            }
+          }
+        }
+      });
+      return cleanAndParseJSON(response.text);
+    } catch {
+      return null;
+    }
+  },
+
+  // NEW: Feature 1 - The Librarian Chat
+  async askLibrarian(query: string, libraryContext: Book[]): Promise<string> {
+    const ai = getAIClient();
+    
+    // Create a lightweight context string to save tokens
+    const context = libraryContext.map(b => 
+      `${b.title} by ${b.author} (${b.tropes?.join(', ')}) [Status: ${b.status}]`
+    ).join('\n');
+
+    const prompt = `You are 'The Librarian', a witty, sophisticated archivist of a queer literature collection.
+    
+    USER QUERY: "${query}"
+    
+    ARCHIVE CONTEXT:
+    ${context}
+    
+    Directives:
+    1. Recommend specific books from the Archive Context if they fit.
+    2. If the user asks for something not in the archive, suggest a real book they should add.
+    3. Be brief, elegant, and helpful. Max 3 sentences.
+    `;
+
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: prompt,
+        config: {
+          thinkingConfig: { thinkingBudget: 1024 }
+        }
+      });
+      return response.text || "The Librarian is silent.";
+    } catch (e) {
+      return "I cannot access the stacks at this moment.";
     }
   },
 
@@ -303,6 +373,67 @@ export const geminiService = {
       return data.recommendations || [];
     } catch (e) {
       console.error("Book recommendation failed", e);
+      return [];
+    }
+  },
+
+  async discoverResources(criteria: { query: string; offset: number; limit?: number }): Promise<Opportunity[]> {
+    const { query = 'Sapphic', offset = 0, limit = 5 } = criteria;
+    const ai = getAIClient();
+    
+    const prompt = `### DIRECTIVE: Execute Asynchronous Opportunity Fetch [OSM-V1.0]
+    
+    LOGIC PARAMETERS:
+    - Target: "${query}"
+    - Types: ["Arc", "Contest", "Free Book"]
+    - Pagination: OFFSET ${offset}, LIMIT ${limit}
+    - Ordering: timestamp DESC
+    
+    QA VALIDATION:
+    - Reject any result where "Sapphic" or "${query}" is not the primary descriptor.
+    - Validate link plausibility.
+    
+    Return a JSON object with a 'resources' array.`;
+
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: prompt,
+        config: {
+          tools: [{ googleSearch: {} }],
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              resources: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    id: { type: Type.STRING },
+                    title: { type: Type.STRING },
+                    author: { type: Type.STRING },
+                    category: { type: Type.STRING, enum: ['Arc', 'Contest', 'Free Book'] },
+                    description: { type: Type.STRING },
+                    source_link: { type: Type.STRING },
+                    timestamp: { type: Type.STRING },
+                    validity_score: { type: Type.NUMBER }
+                  },
+                  required: ['id', 'title', 'category', 'source_link', 'timestamp']
+                }
+              }
+            }
+          }
+        }
+      });
+
+      const data = cleanAndParseJSON(response.text);
+      return (data.resources || []).filter((r: Opportunity) => 
+        (r.title + r.description).toLowerCase().includes(query.toLowerCase()) || 
+        (r.title + r.description).toLowerCase().includes('sapphic')
+      );
+    } catch (e) {
+      console.error("Resource Discovery Failed:", e);
       return [];
     }
   }
