@@ -1,0 +1,22 @@
+{
+  "short_name": "SapphicShelves",
+  "name": "Sapphic Shelves",
+  "description": "A bespoke, AI-powered archival tool for queer literature.",
+  "icons": [
+    {
+      "src": "sapphic_logo.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "sapphic_logo.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#dcedfc",
+  "background_color": "#dcedfc",
+  "orientation": "portrait"
+}

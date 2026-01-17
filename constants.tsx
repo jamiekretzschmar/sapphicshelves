@@ -1,15 +1,15 @@
+
 import React from 'react';
 
-// UPDATED: Calming Desaturated Rainbow Palette
 export const COLORS = {
-  parchment: '#9fbfa3',
-  ink:  '#1F1F0C',
-  rose: '#EB7171',    // Red
-  gold: '#F0B965',    // Orange
-  peach: '#FFF68A',   // Yellow
-  cyan: '##9FBFA3',    // Green (mapped to cyan slot)
-  plum: '#6574bf',    // Blue (mapped to plum slot)
-  sunset: '#ba6b6b',  // Red alias
+  parchment: '#dcedfc',
+  ink: '#334e68',
+  gold: '#9fcbd9',
+  rose: '#D1345B',
+  plum: '#63372C',
+  sunset: '#9A463D',
+  peach: '#5691a4',
+  neutral: '#b9bfc1'
 };
 
 export const ICONS = {

@@ -3,15 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#BFB5B2" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#1E1E23" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#dcedfc" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1a2e40" media="(prefers-color-scheme: dark)">
+  <link rel="manifest" href="./manifest.json">
   <title>Sapphic Shelves | Android Archive</title>
-  
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Inter:wght@100..900&display=swap" rel="stylesheet">
-
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <script>
     tailwind.config = {
       darkMode: ['class', '[data-theme="dark"]'],
@@ -21,111 +20,204 @@
             parchment: 'rgb(var(--rgb-parchment) / <alpha-value>)',
             ink: 'rgb(var(--rgb-ink) / <alpha-value>)',
             'mica-surface': 'rgb(var(--rgb-mica) / <alpha-value>)',
-            primary: 'rgb(var(--rgb-primary) / <alpha-value>)',
-            // Earth Rainbow
-            rose: 'rgb(var(--rgb-rose) / <alpha-value>)',
-            gold: 'rgb(var(--rgb-gold) / <alpha-value>)',
-            peach: 'rgb(var(--rgb-peach) / <alpha-value>)',
-            moss: 'rgb(var(--rgb-moss) / <alpha-value>)',
-            plum: 'rgb(var(--rgb-plum) / <alpha-value>)',
+            brand: {
+              deep: '#1a2e40', 
+              cyan: '#477e96',
+              glow: '#9fcbd9',
+            },
+            neutral: '#b9bfc1',
+            plum: '#5c3a3a',
+            rose: '#bf4362',
+            gold: '#bfa15f',
+            sunset: '#9A463D',
+            md: {
+              sys: {
+                primary: 'rgb(var(--rgb-primary) / <alpha-value>)',
+                surface: 'rgb(var(--rgb-parchment) / <alpha-value>)',
+                onSurface: 'rgb(var(--rgb-ink) / <alpha-value>)',
+              }
+            }
           },
           fontFamily: {
-            header: ['"Cormorant Garamond"', 'serif'],
-            sans: ['Inter', 'sans-serif'],
+            header: ['Cormorant Garamond', 'Garamond', 'serif'],
+            sans: ['Instrument Sans', 'sans-serif'],
+          },
+          boxShadow: {
+            'glass': '0 4px 30px rgba(0, 0, 0, 0.1)',
+            'glass-sm': '0 2px 10px rgba(0, 0, 0, 0.05)',
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.5s ease-out',
+            'slide-up': 'slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+          },
+          keyframes: {
+            fadeIn: { '0%': { opacity: 0 }, '100%': { opacity: 1 } },
+            slideUp: { '0%': { transform: 'translateY(20px)', opacity: 0 }, '100%': { transform: 'translateY(0)', opacity: 1 } }
           }
         }
       }
     };
   </script>
-
   <style>
     :root {
-      /* LIGHT THEME - Earth Tones */
-      --rgb-parchment: 191 181 178;
-      --rgb-ink: 45 42 38;
-      --rgb-mica: 255 255 255; 
-      --rgb-primary: 101 116 191; /* Muted Dusty Blue */
-      
-      --rgb-rose: 186 107 107;
-      --rgb-gold: 212 165 118;
-      --rgb-peach: 231 223 142;
-      --rgb-moss: 133 193 131;
-      --rgb-plum: 101 116 191;
+      /* LIGHT THEME - Sharper contrast */
+      --rgb-parchment: 228 238 245; /* Cleaner blue-white */
+      --rgb-ink: 15 30 50;          /* Almost black blue for high contrast */
+      --rgb-mica: 255 255 255;
+      --rgb-primary: 71 126 150;    
     }
 
     [data-theme="dark"] {
-      /* DARK THEME - Deep Earth */
-      --rgb-parchment: 30 30 35;
-      --rgb-ink: 230 230 230;
-      --rgb-mica: 45 45 50; /* DARKER MICA FOR BUTTONS */
-      --rgb-primary: 133 193 131; /* Muted Moss Green */
+      /* DARK THEME */
+      --rgb-parchment: 26 46 64;   /* Deep Navy */
+      --rgb-ink: 235 242 250;       /* Bright White-Blue */
+      --rgb-mica: 35 55 75;         
+      --rgb-primary: 159 203 217;   
     }
 
+    [data-theme="sepia"] {
+      --rgb-parchment: 240 234 226;
+      --rgb-ink: 48 36 28;
+      --rgb-mica: 250 246 240;
+      --rgb-primary: 166 94 46;
+    }
+    
     html, body {
       height: 100%;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
+      overflow: hidden; 
+    }
+    
+    body {
       background-color: rgb(var(--rgb-parchment));
-      font-family: 'Inter', sans-serif;
-      /* Prevents blue highlight on Android taps */
-      -webkit-tap-highlight-color: transparent; 
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      font-family: 'Instrument Sans', sans-serif;
+      overscroll-behavior-y: none;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-font-smoothing: antialiased; /* Critical for sharpness */
+      -moz-osx-font-smoothing: grayscale;
     }
 
-    /* BOLDER SEARCH BAR */
-    input[type="text"], input[type="search"] {
-      border: 2.5px solid rgb(var(--rgb-primary)) !important;
-      background-color: rgba(var(--rgb-mica), 0.6) !important;
-      border-radius: 12px !important;
-      padding: 12px !important;
-      font-weight: 500;
+    .glass-panel {
+      background: rgba(var(--rgb-mica), 0.65);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+    
+    [data-theme="dark"] .glass-panel {
+       background: rgba(20, 30, 45, 0.6);
+       border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    /* DARKENED UNFILTERED BUTTONS */
-    .filter-btn:not(.active), button:not([class*="bg-primary"]) {
-      background-color: rgb(var(--rgb-mica)) !important;
-      color: rgb(var(--rgb-ink)) !important;
-      border: 1px solid rgba(var(--rgb-ink), 0.1) !important;
-      opacity: 0.9;
-    }
-
+    /* Android Device Shell - DESKTOP ONLY */
     .android-device {
-      width: 100vw;
-      height: 100dvh;
+      width: 100%;
+      height: 100%;
+      position: relative;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
       background: rgb(var(--rgb-parchment));
+      transform: translateZ(0); 
+    }
+    
+    @media (min-width: 481px) {
+      body {
+        background-color: #0f0f0f;
+      }
+      .android-device {
+        height: 850px;
+        width: 412px;
+        border-radius: 44px;
+        border: 10px solid #222;
+        box-shadow: 0 0 80px rgba(0,0,0,0.6);
+      }
+      .android-device ::-webkit-scrollbar {
+        display: none;
+      }
     }
 
-    /* Elegant Book Headers */
-    h1, h2, h3, .font-header {
-      font-family: 'Cormorant Garamond', serif;
-      font-weight: 600;
-      letter-spacing: -0.01em;
+    .screen {
+      flex: 1;
+      background-color: rgb(var(--rgb-parchment));
+      color: rgb(var(--rgb-ink));
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
     }
 
     .scroll-container {
       flex: 1;
       overflow-y: auto;
-      padding-bottom: 120px; /* Space for Nav */
-      padding-top: env(safe-area-inset-top);
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
+      padding-bottom: 110px;
+    }
+    
+    .bottom-nav {
+      position: absolute;
+      bottom: 20px;
+      left: 16px;
+      right: 16px;
+      height: 70px;
+      border-radius: 24px;
+      background: rgba(var(--rgb-mica), 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      z-index: 50;
+      box-shadow: 0 10px 40px -10px rgba(0,0,0,0.15);
+    }
+    
+    [data-theme="dark"] .bottom-nav {
+      background: rgba(30, 45, 60, 0.8);
+      border: 1px solid rgba(255,255,255, 0.05);
     }
 
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      width: 100%;
-      height: calc(70px + env(safe-area-inset-bottom));
-      background: rgba(var(--rgb-parchment), 0.95);
-      backdrop-filter: blur(10px);
-      border-top: 1px solid rgba(var(--rgb-ink), 0.1);
-      z-index: 100;
+    .fab {
+      position: absolute;
+      bottom: 100px;
+      right: 20px;
+      width: 56px;
+      height: 56px;
+      border-radius: 20px;
+      background: rgb(var(--rgb-primary));
+      color: rgb(var(--rgb-parchment));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+      z-index: 60;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
+    .fab:active { transform: scale(0.9); }
   </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "@google/genai": "https://esm.sh/@google/genai@^1.36.0",
+      "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+      "vite": "https://esm.sh/vite@^7.3.1",
+      "react/": "https://esm.sh/react@^19.2.3/",
+      "react": "https://esm.sh/react@^19.2.3",
+      "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
+    }
+  }
+  </script>
 </head>
 <body class="antialiased">
-  <div id="root" class="android-device"></div>
+  <div id="root" style="width: 100%; height: 100%; display: flex; justify-content: center;"></div>
   <script type="module" src="/index.tsx"></script>
 </body>
 </html>
-

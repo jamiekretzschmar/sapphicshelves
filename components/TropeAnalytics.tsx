@@ -12,8 +12,11 @@ const TropeAnalytics: React.FC<TropeAnalyticsProps> = ({ books }) => {
   const analytics = useMemo(() => {
     const counts: Record<string, number> = {};
     const tropeToBooks: Record<string, string[]> = {};
-
+    
+    let readCount = 0;
+    
     books.forEach(book => {
+      if (book.status === 'read') readCount++;
       book.tropes?.forEach(trope => {
         counts[trope] = (counts[trope] || 0) + 1;
         if (!tropeToBooks[trope]) {
@@ -36,6 +39,7 @@ const TropeAnalytics: React.FC<TropeAnalyticsProps> = ({ books }) => {
 
     return {
       top5,
+      readPercentage: books.length > 0 ? Math.round((readCount / books.length) * 100) : 0,
       fullJson: JSON.stringify(
         top5.reduce((acc, item) => ({
           ...acc,
@@ -52,18 +56,23 @@ const TropeAnalytics: React.FC<TropeAnalyticsProps> = ({ books }) => {
 
   const copyJsonToClipboard = () => {
     navigator.clipboard.writeText(analytics.fullJson);
-    // Note: Toast feedback is handled by parent if needed, 
-    // but we can assume success for this utility.
   };
 
   if (books.length === 0) return null;
 
   return (
-    <section className="bg-mica-surface border border-ink/5 p-6 rounded-3xl space-y-4 shadow-sm">
-      <div className="flex justify-between items-center">
+    <section className="bg-mica-surface border border-ink/5 p-6 rounded-3xl space-y-4 shadow-sm relative overflow-hidden">
+      {/* Feature 6: Reading Velocity / Completionist Metric */}
+      <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+        <span className="text-9xl font-header italic">{analytics.readPercentage}%</span>
+      </div>
+
+      <div className="flex justify-between items-center relative z-10">
         <div>
           <h3 className="font-header text-xl italic">Thematic Distribution</h3>
-          <p className="text-[8px] font-black uppercase tracking-[0.2em] text-ink/30">Top 5 Archival Tropes</p>
+          <p className="text-[8px] font-black uppercase tracking-[0.2em] text-ink/30">
+            Archive Completion: {analytics.readPercentage}%
+          </p>
         </div>
         <button 
           onClick={() => setIsReportOpen(!isReportOpen)}
@@ -73,7 +82,7 @@ const TropeAnalytics: React.FC<TropeAnalyticsProps> = ({ books }) => {
         </button>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-4 relative z-10">
         {analytics.top5.map(({ trope, count, books: tropeBooks }) => (
           <div key={trope} className="space-y-2">
             <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider text-ink/60">
@@ -81,7 +90,7 @@ const TropeAnalytics: React.FC<TropeAnalyticsProps> = ({ books }) => {
                 {trope}
                 <span className="text-[8px] bg-plum/5 px-1.5 py-0.5 rounded text-plum/40">{count}</span>
               </span>
-              <span className="text-plum opacity-40 italic">{Math.round((count / books.length) * 100)}% of Archive</span>
+              <span className="text-plum opacity-40 italic">{Math.round((count / books.length) * 100)}%</span>
             </div>
             <div className="w-full h-1 bg-ink/5 rounded-full overflow-hidden">
               <div 

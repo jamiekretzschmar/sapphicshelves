@@ -1,8 +1,0 @@
-{
-	"appId": "com.sapphicshelves.app",
-	"appName": "SapphicShelves",
-	"webDir": "dist",
-	"server": {
-		"androidScheme": "https"
-	}
-}

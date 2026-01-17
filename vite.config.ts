@@ -8,6 +8,12 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, (process as any).cwd(), '');
 
   return {
+    // CRITICAL: Base must be relative for APK/Cordova/Capacitor file:// protocol to work
+    base: './', 
+    build: {
+      outDir: 'dist',
+      emptyOutDir: true,
+    },
     plugins: [react()],
     define: {
       // Maps process.env.API_KEY to the loaded environment variable for client-side usage

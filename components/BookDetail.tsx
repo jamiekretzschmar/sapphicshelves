@@ -31,6 +31,7 @@ const BookDetail: React.FC<BookDetailProps> = ({
   onKeyError 
 }) => {
   const [isEnriching, setIsEnriching] = useState(false);
+  const [isAnalyzingSeries, setIsAnalyzingSeries] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [imageErrorLevel, setImageErrorLevel] = useState(0);
   const [editValues, setEditValues] = useState({ title: book.title, author: book.author });
@@ -62,12 +63,26 @@ const BookDetail: React.FC<BookDetailProps> = ({
         synopsis: book.synopsis || enrichment.synopsis,
         tropes: Array.from(new Set([...(book.tropes || []), ...(enrichment.tropes || [])]))
       });
+      // Trigger series check after enrichment
+      checkSeries(book.title, book.author);
     } catch (error: any) {
       if (error.message?.includes('403') || error.message?.includes('leaked')) {
         onKeyError();
       }
     } finally {
       setIsEnriching(false);
+    }
+  };
+
+  const checkSeries = async (title: string, author: string) => {
+    setIsAnalyzingSeries(true);
+    try {
+      const seriesInfo = await geminiService.analyzeSeries(title, author);
+      if (seriesInfo && seriesInfo.name) {
+        onUpdate({ ...book, series: seriesInfo });
+      }
+    } finally {
+      setIsAnalyzingSeries(false);
     }
   };
 
@@ -114,10 +129,15 @@ const BookDetail: React.FC<BookDetailProps> = ({
     dnf: 'bg-rose/10 text-rose'
   };
 
+  // Feature 11: Fluid Ambient Background
+  const moodStyle = book.moodColor ? { 
+    background: `linear-gradient(135deg, ${book.moodColor}15 0%, var(--rgb-parchment) 100%)` 
+  } : {};
+
   return (
     <div 
       className="bg-parchment/95 backdrop-blur-xl border border-ink/10 rounded-[2rem] shadow-2xl relative animate-in zoom-in-95 duration-300 overflow-hidden flex flex-col max-h-[90vh] w-full max-w-2xl mx-auto"
-      style={{ overscrollBehavior: 'contain' }}
+      style={{ ...moodStyle, overscrollBehavior: 'contain' }}
     >
       {/* Header */}
       <div className="flex justify-between items-center p-6 border-b border-ink/5 shrink-0">
@@ -129,11 +149,11 @@ const BookDetail: React.FC<BookDetailProps> = ({
         <div className="flex flex-col md:flex-row gap-8">
           {/* Cover & Actions */}
           <div className="flex flex-col gap-4 w-full md:w-48 shrink-0">
-             <div className="aspect-[2/3] w-48 mx-auto bg-white rounded-lg shadow-xl border border-ink/5 overflow-hidden relative group">
+             <div className="aspect-[2/3] w-48 mx-auto bg-white rounded-lg shadow-xl border border-ink/5 overflow-hidden relative group perspective-1000">
                 {currentCoverUrl ? (
                   <img 
                     src={currentCoverUrl} 
-                    className="w-full h-full object-cover" 
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
                     alt={book.title} 
                     onError={() => setImageErrorLevel(prev => prev + 1)}
                   />
@@ -219,6 +239,29 @@ const BookDetail: React.FC<BookDetailProps> = ({
                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                  </button>
                </div>
+             )}
+             
+             {/* Feature 2: Series Gap Detection */}
+             {book.series ? (
+               <div className="bg-brand-deep/5 p-4 rounded-xl border border-brand-deep/10 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                 <div className="p-2 bg-brand-deep text-parchment rounded-lg text-xs font-bold">
+                   #{book.series.index}
+                 </div>
+                 <div>
+                   <h4 className="font-bold text-xs uppercase tracking-wider text-ink/70">Part of {book.series.name}</h4>
+                   {book.series.nextBookTitle && (
+                     <p className="text-xs text-ink/60 mt-1 italic">
+                       Next in series: <span className="font-bold text-ink">{book.series.nextBookTitle}</span>
+                     </p>
+                   )}
+                 </div>
+               </div>
+             ) : (
+               !isAnalyzingSeries && (
+                 <button onClick={() => checkSeries(book.title, book.author)} className="text-[9px] text-brand-cyan hover:underline font-bold uppercase tracking-widest">
+                    Check Series Info
+                 </button>
+               )
              )}
 
              {/* Shelf Mover */}

@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { ICONS } from '../constants';
 import { NavigationTab, Theme, SystemTask } from '../types';
@@ -66,7 +67,7 @@ const Layout: React.FC<LayoutProps> = ({
   return (
     <div className={`android-device ${settings.largeText ? 'text-lg' : ''}`} data-theme={theme}>
       {/* Fake Status Bar - Hidden on Mobile */}
-      <div className="hidden md:flex status-bar justify-between items-center px-4 pt-1 opacity-50 text-[10px] font-mono select-none">
+      <div className="hidden md:flex status-bar justify-between items-center px-6 pt-2 opacity-60 text-[10px] font-medium font-sans select-none text-ink">
         <span>SAPPHIC.OS</span>
         <span>100%</span>
       </div>
@@ -75,49 +76,49 @@ const Layout: React.FC<LayoutProps> = ({
         {/* Navigation Scrim */}
         {isDrawerOpen && (
           <div 
-            className="absolute inset-0 bg-ink/30 backdrop-blur-sm z-[190] animate-fade-in"
+            className="absolute inset-0 bg-brand-deep/20 backdrop-blur-sm z-[190] animate-fade-in"
             onClick={() => setIsDrawerOpen(false)}
           />
         )}
 
-        {/* Global Task Indicator - Non-blocking Signifier */}
+        {/* Global Task Indicator */}
         {activeTaskLabel && (
-           <div className="absolute top-16 right-4 left-4 z-[180] pointer-events-none flex justify-center animate-in fade-in slide-in-from-top-2 duration-300">
-             <div className="bg-ink/90 backdrop-blur-md text-parchment px-4 py-2 rounded-full flex items-center gap-3 shadow-xl border border-parchment/10">
-               <div className="relative w-3 h-3">
+           <div className="absolute top-20 right-4 left-4 z-[180] pointer-events-none flex justify-center animate-in fade-in slide-in-from-top-2 duration-300">
+             <div className="glass-panel px-4 py-2 rounded-full flex items-center gap-3 shadow-glass-sm">
+               <div className="relative w-2 h-2">
                  <span className="absolute inset-0 rounded-full bg-brand-cyan/50 animate-ping"></span>
-                 <span className="absolute inset-0 rounded-full bg-brand-cyan border border-parchment/20"></span>
+                 <span className="absolute inset-0 rounded-full bg-brand-cyan"></span>
                </div>
-               <span className="text-[10px] font-black uppercase tracking-widest">{activeTaskLabel}</span>
+               <span className="text-[10px] font-bold uppercase tracking-widest text-ink">{activeTaskLabel}</span>
              </div>
            </div>
         )}
 
         {/* The Archivist's Cloister (Drawer) */}
         <aside 
-          className={`absolute inset-y-0 left-0 w-[85%] max-w-[320px] bg-parchment z-[200] shadow-[10px_0_40px_rgba(0,0,0,0.3)] transform transition-transform duration-300 ease-out flex flex-col border-r border-ink/5 ${
+          className={`absolute inset-y-0 left-0 w-[85%] max-w-[320px] bg-parchment/95 backdrop-blur-xl z-[200] shadow-2xl transform transition-transform duration-300 cubic-bezier(0.16, 1, 0.3, 1) flex flex-col border-r border-ink/5 ${
             isDrawerOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
           style={{ paddingTop: 'env(safe-area-inset-top)' }}
         >
-          <div className="p-6 space-y-8 flex-1 overflow-y-auto">
+          <div className="p-8 space-y-10 flex-1 overflow-y-auto">
             <div className="flex items-center justify-between">
-              <Logo size={42} />
+              <Logo size={48} />
               <button 
                 onClick={() => setIsDrawerOpen(false)}
-                className="w-10 h-10 flex items-center justify-center rounded-full bg-ink/5 text-ink/60 hover:bg-ink/10 active:scale-95 transition-transform"
+                className="w-8 h-8 flex items-center justify-center rounded-full text-ink hover:bg-ink/5 transition-colors"
                 aria-label="Close menu"
               >
                 ✕
               </button>
             </div>
 
-            <div className="space-y-1">
-              <h2 className="font-header text-3xl italic text-ink leading-tight">The Cloister</h2>
-              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-plum opacity-60">Protocol Navigation</p>
+            <div className="space-y-2">
+              <h2 className="font-header text-4xl font-medium text-ink leading-none tracking-tight">The Cloister</h2>
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-brand-cyan">Protocol Navigation</p>
             </div>
 
-            <nav className="space-y-2">
+            <nav className="space-y-1">
               <DrawerItem 
                 active={activeTab === NavigationTab.LIBRARY}
                 onClick={() => handleNav(NavigationTab.LIBRARY)}
@@ -150,26 +151,26 @@ const Layout: React.FC<LayoutProps> = ({
               />
             </nav>
 
-            <div className="pt-8 border-t border-ink/5 space-y-3">
-              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-plum opacity-60">System Config</p>
+            <div className="pt-8 border-t border-ink/10 space-y-4">
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-ink/40">System Config</p>
               
               <button 
                 onClick={onToggleTheme}
-                className="w-full flex items-center justify-between p-4 rounded-xl bg-mica-surface hover:bg-ink/5 transition-colors border border-ink/5"
+                className="w-full flex items-center justify-between p-4 rounded-xl bg-white/40 hover:bg-white/60 transition-colors border border-ink/5"
               >
-                <span className="text-xs font-bold text-ink">Cycle Theme</span>
-                <span className="text-[10px] font-black text-md-sys-primary uppercase">{theme}</span>
+                <span className="text-xs font-semibold text-ink font-header text-lg">Visual Theme</span>
+                <span className="text-[10px] font-bold text-ink/60 uppercase tracking-wider">{theme}</span>
               </button>
               
-              <div className="grid grid-cols-2 gap-2">
-                <button onClick={onExport} className="p-3 bg-ink/5 text-ink rounded-xl text-[10px] font-bold uppercase tracking-wider">Export</button>
-                <button onClick={handleImportClick} className="p-3 bg-ink/5 text-ink rounded-xl text-[10px] font-bold uppercase tracking-wider">Import</button>
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={onExport} className="p-4 bg-white/40 text-ink rounded-xl text-[10px] font-bold uppercase tracking-wider border border-ink/5 hover:bg-white/60 transition-colors">Export</button>
+                <button onClick={handleImportClick} className="p-4 bg-white/40 text-ink rounded-xl text-[10px] font-bold uppercase tracking-wider border border-ink/5 hover:bg-white/60 transition-colors">Import</button>
               </div>
               <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={handleFileChange} />
               
               <button 
                 onClick={handleReset}
-                className="w-full py-3 bg-rose/10 text-rose rounded-xl text-[10px] font-black uppercase tracking-widest mt-4"
+                className="w-full py-3 text-rose hover:bg-rose/5 rounded-xl text-[10px] font-bold uppercase tracking-widest mt-4 transition-colors"
               >
                 Reset Protocol
               </button>
@@ -177,42 +178,46 @@ const Layout: React.FC<LayoutProps> = ({
           </div>
         </aside>
 
-        <header className="h-14 flex items-center justify-between px-4 bg-parchment/90 backdrop-blur-md sticky top-0 z-40 border-b border-ink/5 select-none">
-          <div className="flex items-center gap-3">
+        {/* Floating Glass Header */}
+        <header className="absolute top-4 left-4 right-4 h-16 glass-panel rounded-2xl flex items-center justify-between px-5 z-40 select-none">
+          <div className="flex items-center gap-4">
             <button 
               onClick={() => setIsDrawerOpen(true)}
-              className="p-2 -ml-2 rounded-full hover:bg-ink/5 active:bg-ink/10 transition-colors"
+              className="p-1 rounded-full text-ink hover:text-brand-cyan transition-colors"
             >
-              <svg className="w-6 h-6 text-ink" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h8m-8 6h16" />
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h8m-8 6h16" />
               </svg>
             </button>
-            <h1 className="font-header text-2xl font-bold text-brand-deep italic">Sapphic Shelves</h1>
+            <h1 className="font-header text-3xl font-medium text-ink tracking-tight pt-1">Sapphic Shelves</h1>
           </div>
           <button 
             onClick={onOpenSettings} 
-            className="p-2 -mr-2 rounded-full hover:bg-ink/5 active:bg-ink/10 text-ink/60"
+            className="p-2 rounded-full text-ink/60 hover:text-ink transition-colors"
           >
             <ICONS.Settings className="w-5 h-5" />
           </button>
         </header>
 
-        <div className="scroll-container bg-parchment">
+        {/* Main Scroll Area */}
+        <div className="scroll-container bg-parchment pt-24">
           {children}
         </div>
 
+        {/* Floating Action Button */}
         {activeTab !== NavigationTab.SCANNER && activeTab !== NavigationTab.LIBRARY && (
           <button 
-            className="fab"
+            className="fab hover:scale-105 active:scale-95 transition-all"
             onClick={() => onTabChange(NavigationTab.SCANNER)}
             aria-label="Acquire New Volume"
           >
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
           </button>
         )}
 
+        {/* Glass Bottom Nav */}
         <nav className="bottom-nav">
           <NavItem 
             active={activeTab === NavigationTab.LIBRARY} 
@@ -249,12 +254,12 @@ const DrawerItem: React.FC<{ active: boolean; onClick: () => void; icon: React.R
 }) => (
   <button 
     onClick={onClick}
-    className={`w-full flex items-center gap-4 p-3.5 rounded-xl transition-all ${
-      active ? 'bg-ink text-parchment shadow-md' : 'hover:bg-ink/5 text-ink'
+    className={`w-full flex items-center gap-4 p-4 rounded-xl transition-all border border-transparent ${
+      active ? 'bg-white shadow-sm border-ink/5 text-brand-deep' : 'hover:bg-ink/5 text-ink/70'
     }`}
   >
-    <div className={active ? 'text-parchment' : 'text-brand-deep'}>{icon}</div>
-    <span className="text-sm font-bold italic">{label}</span>
+    <div className={active ? 'text-brand-cyan' : 'text-ink/40'}>{icon}</div>
+    <span className={`text-lg font-header pt-1 ${active ? 'font-medium' : 'font-normal'}`}>{label}</span>
   </button>
 );
 
@@ -263,14 +268,14 @@ const NavItem: React.FC<{ active: boolean; onClick: () => void; icon: React.Reac
 }) => (
   <div 
     onClick={onClick}
-    className={`flex flex-col items-center gap-1 flex-1 py-1 cursor-pointer transition-opacity ${active ? 'opacity-100' : 'opacity-40'}`}
+    className={`flex flex-col items-center justify-center gap-1 w-16 h-full cursor-pointer transition-all duration-300 group`}
   >
-    <div className={`p-1.5 rounded-full transition-transform duration-300 ${active ? 'bg-ink/5 -translate-y-1' : ''}`}>
+    <div className={`p-1.5 rounded-full transition-all duration-300 ${active ? 'bg-brand-deep text-parchment transform -translate-y-1 shadow-lg' : 'text-ink/50 group-hover:text-ink'}`}>
       {React.cloneElement(icon as React.ReactElement, { 
-        className: `w-6 h-6 ${active ? 'text-brand-deep' : 'text-ink'} stroke-[1.5]`
+        className: `w-5 h-5 stroke-[1.5]`
       })}
     </div>
-    <span className={`text-[9px] font-bold uppercase tracking-widest ${active ? 'text-brand-deep' : 'text-ink'}`}>
+    <span className={`text-[9px] font-bold uppercase tracking-widest transition-opacity duration-300 ${active ? 'opacity-100 text-ink' : 'opacity-0 h-0 overflow-hidden'}`}>
       {label}
     </span>
   </div>

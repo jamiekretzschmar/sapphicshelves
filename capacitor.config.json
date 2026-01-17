@@ -1,0 +1,11 @@
+{
+  "appId": "com.sapphicshelves.app",
+  "appName": "Sapphic Shelves",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "path": "android"
+  }
+}
