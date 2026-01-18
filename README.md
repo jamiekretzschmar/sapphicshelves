@@ -1,4 +1,4 @@
-
+#
 # 📚 Sapphic Shelves: Archival Protocol
 
 **Sapphic Shelves** is an elite, open-source archival engine designed for the high-fidelity curation of queer and sapphic literature. Using **Gemini 3.0** vision and search grounding, it transforms physical collections into structured digital monographs.
