@@ -1,0 +1,78 @@
+[
+    {
+        "merged": "com.jamiekretzschmar.sapphicshelves.app-merged_res-37:/xml_data_extration_rules.xml.flat",
+        "source": "com.jamiekretzschmar.sapphicshelves.app-main-39:/xml/data_extration_rules.xml"
+    },
+    {
+        "merged": "com.jamiekretzschmar.sapphicshelves.app-merged_res-37:/mipmap-anydpi-v26_ic_launcher_forground.xml.flat",
+        "source": "com.jamiekretzschmar.sapphicshelves.app-main-39:/mipmap-anydpi-v26/ic_launcher_forground.xml"
+    },
+    {
+        "merged": "com.jamiekretzschmar.sapphicshelves.app-merged_res-37:/mipmap-xhdpi_ic_launcher_forground_round.webp.flat",
+        "source": "com.jamiekretzschmar.sapphicshelves.app-main-39:/mipmap-xhdpi/ic_launcher_forground_round.webp"
+    },
+    {
+        "merged": "com.jamiekretzschmar.sapphicshelves.app-merged_res-37:/mipmap-xxhdpi_ic_launcher_forground.webp.flat",
+        "source": "com.jamiekretzschmar.sapphicshelves.app-main-39:/mipmap-xxhdpi/ic_launcher_forground.webp"
+    },
+    {
+        "merged": "com.jamiekretzschmar.sapphicshelves.app-merged_res-37:/mipmap-xxxhdpi_ic_launcher_forground.webp.flat",
+        "source": "com.jamiekretzschmar.sapphicshelves.app-main-39:/mipmap-xxxhdpi/ic_launcher_forground.webp"
+    },
+    {
+        "merged": "com.jamiekretzschmar.sapphicshelves.app-merged_res-37:/mipmap-xxhdpi_ic_launcher_forground_round.webp.flat",
+        "source": "com.jamiekretzschmar.sapphicshelves.app-main-39:/mipmap-xxhdpi/ic_launcher_forground_round.webp"
+    },
+    {
+        "merged": "com.jamiekretzschmar.sapphicshelves.app-merged_res-37:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "com.jamiekretzschmar.sapphicshelves.app-main-39:/drawable/ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "com.jamiekretzschmar.sapphicshelves.app-merged_res-37:/mipmap-xxxhdpi_ic_launcher_forground_round.webp.flat",
+        "source": "com.jamiekretzschmar.sapphicshelves.app-main-39:/mipmap-xxxhdpi/ic_launcher_forground_round.webp"
+    },
+    {
+        "merged": "com.jamiekretzschmar.sapphicshelves.app-merged_res-37:/drawable_ic_launcher_forground.xml.flat",
+        "source": "com.jamiekretzschmar.sapphicshelves.app-main-39:/drawable/ic_launcher_forground.xml"
+    },
+    {
+        "merged": "com.jamiekretzschmar.sapphicshelves.app-merged_res-37:/drawable_ic_launcher_forground_background.xml.flat",
+        "source": "com.jamiekretzschmar.sapphicshelves.app-main-39:/drawable/ic_launcher_forground_background.xml"
+    },
+    {
+        "merged": "com.jamiekretzschmar.sapphicshelves.app-merged_res-37:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.jamiekretzschmar.sapphicshelves.app-main-39:/mipmap-anydpi-v26/ic_launcher.xml"
+    },
+    {
+        "merged": "com.jamiekretzschmar.sapphicshelves.app-merged_res-37:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "com.jamiekretzschmar.sapphicshelves.app-main-39:/mipmap-anydpi-v26/ic_launcher_round.xml"
+    },
+    {
+        "merged": "com.jamiekretzschmar.sapphicshelves.app-merged_res-37:/mipmap-mdpi_ic_launcher_forground.webp.flat",
+        "source": "com.jamiekretzschmar.sapphicshelves.app-main-39:/mipmap-mdpi/ic_launcher_forground.webp"
+    },
+    {
+        "merged": "com.jamiekretzschmar.sapphicshelves.app-merged_res-37:/layout_activity_main.xml.flat",
+        "source": "com.jamiekretzschmar.sapphicshelves.app-main-39:/layout/activity_main.xml"
+    },
+    {
+        "merged": "com.jamiekretzschmar.sapphicshelves.app-merged_res-37:/mipmap-hdpi_ic_launcher_forground_round.webp.flat",
+        "source": "com.jamiekretzschmar.sapphicshelves.app-main-39:/mipmap-hdpi/ic_launcher_forground_round.webp"
+    },
+    {
+        "merged": "com.jamiekretzschmar.sapphicshelves.app-merged_res-37:/mipmap-hdpi_ic_launcher_forground.webp.flat",
+        "source": "com.jamiekretzschmar.sapphicshelves.app-main-39:/mipmap-hdpi/ic_launcher_forground.webp"
+    },
+    {
+        "merged": "com.jamiekretzschmar.sapphicshelves.app-merged_res-37:/mipmap-mdpi_ic_launcher_forground_round.webp.flat",
+        "source": "com.jamiekretzschmar.sapphicshelves.app-main-39:/mipmap-mdpi/ic_launcher_forground_round.webp"
+    },
+    {
+        "merged": "com.jamiekretzschmar.sapphicshelves.app-merged_res-37:/mipmap-anydpi-v26_ic_launcher_forground_round.xml.flat",
+        "source": "com.jamiekretzschmar.sapphicshelves.app-main-39:/mipmap-anydpi-v26/ic_launcher_forground_round.xml"
+    },
+    {
+        "merged": "com.jamiekretzschmar.sapphicshelves.app-merged_res-37:/mipmap-xhdpi_ic_launcher_forground.webp.flat",
+        "source": "com.jamiekretzschmar.sapphicshelves.app-main-39:/mipmap-xhdpi/ic_launcher_forground.webp"
+    }
+]
