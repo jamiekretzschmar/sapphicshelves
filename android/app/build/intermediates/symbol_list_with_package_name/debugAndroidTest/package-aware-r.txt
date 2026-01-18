@@ -1,3 +1,0 @@
-com.jamiekretzschmar.sapphicshelves.test
-style WhiteBackgroundDialogTheme
-style WhiteBackgroundTheme

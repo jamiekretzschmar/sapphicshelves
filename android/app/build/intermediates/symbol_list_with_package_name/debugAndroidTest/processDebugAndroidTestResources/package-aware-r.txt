@@ -1,3 +1,0 @@
-com.sapphicshelves.app.test
-style WhiteBackgroundDialogTheme
-style WhiteBackgroundTheme
