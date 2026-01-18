@@ -1,0 +1,14 @@
+[
+    {
+        "merged": "C:\\Users\\jtkre\\.gradle\\daemon\\8.5\\com.jamiekretzschmar.sapphicshelves.app-merged_res-37:\\mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "C:\\Users\\jtkre\\.gradle\\daemon\\8.5\\com.jamiekretzschmar.sapphicshelves.app-main-39:\\mipmap-anydpi-v26\\ic_launcher.xml"
+    },
+    {
+        "merged": "C:\\Users\\jtkre\\.gradle\\daemon\\8.5\\com.jamiekretzschmar.sapphicshelves.app-merged_res-37:\\layout_activity_main.xml.flat",
+        "source": "C:\\Users\\jtkre\\.gradle\\daemon\\8.5\\com.jamiekretzschmar.sapphicshelves.app-main-39:\\layout\\activity_main.xml"
+    },
+    {
+        "merged": "com.jamiekretzschmar.sapphicshelves.app-merged_res-37:/xml_data_extration_rules.xml.flat",
+        "source": "com.jamiekretzschmar.sapphicshelves.app-main-39:/xml/data_extration_rules.xml"
+    }
+]
