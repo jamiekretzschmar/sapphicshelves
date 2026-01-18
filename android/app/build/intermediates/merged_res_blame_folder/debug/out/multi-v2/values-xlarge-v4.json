@@ -4,7 +4,7 @@
             "outputFile": "com.jamiekretzschmar.sapphicshelves.app-mergeDebugResources-35:/values-xlarge-v4/values-xlarge-v4.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\jtkre\\.gradle\\caches\\transforms-3\\f654ce557f36cb447ef36abb3d13c9c4\\transformed\\appcompat-1.6.1\\res\\values-xlarge-v4\\values-xlarge-v4.xml",
+                    "source": "C:\\Users\\jtkre\\.gradle\\caches\\8.13\\transforms\\a9906b85f0dcd37bdcaaf6580623ab5a\\transformed\\appcompat-1.6.1\\res\\values-xlarge-v4\\values-xlarge-v4.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7",
                         "startColumns": "4,4,4,4,4,4",

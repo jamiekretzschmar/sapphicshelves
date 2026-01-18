@@ -4,8 +4,14 @@ color colorAccent
 color colorPrimary
 color colorPrimaryDark
 color ic_launcher_background
+drawable ic_launcher_foreground
+drawable ic_launcher_forground
+drawable ic_launcher_forground_background
 layout activity_main
 mipmap ic_launcher
+mipmap ic_launcher_forground
+mipmap ic_launcher_forground_round
+mipmap ic_launcher_round
 string app_name
 string gcm_defaultSenderId
 string google_api_key

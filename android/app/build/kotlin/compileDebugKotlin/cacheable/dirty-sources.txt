@@ -1,0 +1,2 @@
+C:\Users\jtkre\sapphicshelves\android\app\src\main\kotlin\com\sapphicshelves\app\MainActivity.kt
+C:\Users\jtkre\sapphicshelves\android\app\src\main\kotlin\com\jamiekretzschmar\sapphicshelves\MainActivity.kt

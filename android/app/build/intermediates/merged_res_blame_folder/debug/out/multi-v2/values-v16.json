@@ -4,7 +4,7 @@
             "outputFile": "com.jamiekretzschmar.sapphicshelves.app-mergeDebugResources-35:/values-v16/values-v16.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\jtkre\\.gradle\\caches\\transforms-3\\291dd9cd3114607fd1aa22775b432f83\\transformed\\core-1.12.0\\res\\values-v16\\values-v16.xml",
+                    "source": "C:\\Users\\jtkre\\.gradle\\caches\\8.13\\transforms\\7b5dd15aaa2f135864e6fb9f730c42fd\\transformed\\core-1.12.0\\res\\values-v16\\values-v16.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",
@@ -14,7 +14,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\jtkre\\.gradle\\caches\\transforms-3\\f654ce557f36cb447ef36abb3d13c9c4\\transformed\\appcompat-1.6.1\\res\\values-v16\\values-v16.xml",
+                    "source": "C:\\Users\\jtkre\\.gradle\\caches\\8.13\\transforms\\a9906b85f0dcd37bdcaaf6580623ab5a\\transformed\\appcompat-1.6.1\\res\\values-v16\\values-v16.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",
