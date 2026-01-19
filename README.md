@@ -1,7 +1,7 @@
 #
 # 📚 Sapphic Shelves: Archival Protocol
 
-**Sapphic Shelves** is an elite, open-source archival engine designed for the high-fidelity curation of queer and sapphic literature. Using **Gemini 3.0** vision and search grounding, it transforms physical collections into structured digital monographs.
+**Sapphic Shelves** is an elite, open-source archival engine designed for the high-fidelity curation of queer and sapphic literature. Using **Gemini 2.0 Flash** vision and search grounding, it transforms physical collections into structured digital monographs.
 
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/your-repo/sapphic-shelves/blob/main/LICENSE)
 [![GitHub PRs](https://img.shields.io/badge/PRs-welcome-rose.svg)](https://github.com/your-repo/sapphic-shelves/compare)
@@ -11,56 +11,53 @@ To provide queer readers with a bespoke, secure, and intelligent space to catalo
 
 ## 🛠 Technical Stack
 - **Frontend:** React 19 + TypeScript + Tailwind CSS
-- **Intelligence:** Google Gemini 3.0 (Flash & Pro variants)
+- **Android:** Native Kotlin Wrapper (Gradle 8.5)
+- **Intelligence:** Google Gemini 2.0 (Flash & Pro variants)
 - **Persistence:** Versioned localStorage with JSON archival export
 - **Performance:** Worker-based image compression & Async sync queuing
 
 ## 🚀 Key Features
 - **Shelf Sync:** Vision-based acquisition of multiple spines from a single photo.
+- **Lexicon & Curator:** Binary signifier mapping (Inscribe/Redact) with AI-guided volume discovery.
 - **Author Pulses:** Deep-research engine for author backgrounds and upcoming releases.
 - **Resource Engine:** Aggregated tracker for ARCs, contests, and free queer editions.
 - **Command Palette:** `⌘K` global navigation for power users.
-- **Themes:** Light, Dark, and a book-centric Sepia mode.
 
-## 📥 Installation (Desktop/Standard)
-1. `git clone https://github.com/your-user/sapphic-shelves.git`
+## 📱 Android Application
+The project now includes a native Android wrapper located in the `/android` directory.
+
+### Build Requirements
+- Android Studio Iguana or newer
+- JDK 17
+- Android SDK 34 (Upside Down Cake)
+
+### Building the APK
+1. Open the `android` folder as a project in Android Studio.
+2. Ensure you have a `.env` file in the root with your `VITE_GEMINI_API_KEY`.
+3. Sync Project with Gradle Files.
+4. Go to **Build > Build Bundle(s) / APK(s) > Build APK(s)**.
+
+## 📥 Web Installation
+1. `git clone https://github.com/jtkre/sapphicshelves.git`
 2. `npm install`
-3. Add your `API_KEY` to the environment.
+3. Create a `.env` file and add:
+   ```env
+   VITE_GEMINI_API_KEY=your_actual_key_here
+   ```
 4. `npm run dev`
 
-## 📱 Android Installation (via Termux)
-Run Sapphic Shelves natively on your Android device using the Termux terminal emulator.
-
-1. **Install Termux:** Download the latest version from [F-Droid](https://f-droid.org/en/packages/com.termux/) (Do not use the Google Play Store version as it is deprecated).
-2. **Setup Environment:**
-   Open Termux and run:
-   ```bash
-   pkg update && pkg upgrade
-   pkg install git nodejs
-   ```
-3. **Clone & Install:**
-   ```bash
-   git clone https://github.com/your-repo/sapphic-shelves.git
-   cd sapphic-shelves
-   npm install
-   ```
-4. **Configure API Key:**
-   Create a local configuration file to store your credentials:
-   ```bash
-   echo "API_KEY=your_actual_gemini_api_key_here" > .env
-   ```
-5. **Launch Protocol:**
-   Use the dedicated Android script to launch the system browser via `termux-open-url`:
-   ```bash
-   npm run dev:android
-   ```
-6. **Access:** The application will automatically open in your default mobile browser (e.g., Chrome, Firefox).
+## 📱 Mobile Web (via Termux)
+1. **Install Termux** from F-Droid.
+2. `pkg update && pkg upgrade && pkg install git nodejs`
+3. `git clone https://github.com/jtkre/sapphicshelves.git`
+4. `cd sapphicshelves && npm install`
+5. `npm run dev:android`
 
 ## 🤝 Contributing
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+Contributions are welcome. Please ensure your code respects the archival aesthetic and maintains high-fidelity data types.
 
 ## 📜 License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
 
 ---
 *Developed with archival precision.*

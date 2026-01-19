@@ -33,7 +33,9 @@ const LexiconView: React.FC<LexiconViewProps> = ({
   onAddFavorite,
   onRemoveFavorite,
   startTask,
-  endTask
+  endTask,
+  onUpdateBook,
+  canadianFocus
 }) => {
   const haptics = useHaptics();
   const [activeTab, setActiveTab] = useState<LexiconTab>('pool');
@@ -43,6 +45,7 @@ const LexiconView: React.FC<LexiconViewProps> = ({
   const [activeSearch, setActiveSearch] = useState('');
   const [customTag, setCustomTag] = useState('');
   const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     // Initial random shuffle
@@ -80,14 +83,17 @@ const LexiconView: React.FC<LexiconViewProps> = ({
   };
 
   const handleSuggest = async () => {
+    if (isSuggesting) return;
     setIsSuggesting(true);
     haptics.trigger('heavy');
     const taskId = startTask('Consulting Lexicon');
     try {
       const suggestions = await geminiService.suggestLexiconTags(shuffledPool);
-      setShuffledPool(prev => [...new Set([...suggestions, ...prev])].slice(0, 24));
+      if (suggestions && suggestions.length > 0) {
+        setShuffledPool(prev => [...new Set([...suggestions, ...prev])].slice(0, 24));
+      }
     } catch (e) {
-      console.error(e);
+      console.error("Suggestion failed", e);
     } finally {
       setIsSuggesting(false);
       endTask(taskId);
@@ -104,6 +110,8 @@ const LexiconView: React.FC<LexiconViewProps> = ({
   };
 
   const handleSearchBooks = async () => {
+    if (isSearching) return;
+    
     const included = Object.keys(tagMap).filter(t => tagMap[t] === 'include');
     const excluded = Object.keys(tagMap).filter(t => tagMap[t] === 'exclude');
     
@@ -112,6 +120,7 @@ const LexiconView: React.FC<LexiconViewProps> = ({
       return;
     }
 
+    setIsSearching(true);
     const taskId = startTask('Scouting Volumes');
     haptics.trigger('heavy');
     setRecommendations([]);
@@ -120,8 +129,10 @@ const LexiconView: React.FC<LexiconViewProps> = ({
       const results = await geminiService.recommendBooksByTropes(included, excluded);
       setRecommendations(results);
     } catch (e) {
-      console.error(e);
+      console.error("Search failed", e);
+      alert("The Curator is currently unreachable. Check your API key.");
     } finally {
+      setIsSearching(false);
       endTask(taskId);
     }
   };
@@ -177,9 +188,9 @@ const LexiconView: React.FC<LexiconViewProps> = ({
                 <button 
                   onClick={handleSuggest}
                   disabled={isSuggesting}
-                  className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest text-brand-cyan hover:text-brand-deep transition-all"
+                  className={`flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest text-brand-cyan hover:text-brand-deep transition-all ${isSuggesting ? 'opacity-50' : ''}`}
                 >
-                  Suggest Signifiers
+                  {isSuggesting ? 'Suggesting...' : 'Suggest Signifiers'}
                 </button>
                 <button 
                   onClick={handleShuffle}
@@ -245,10 +256,17 @@ const LexiconView: React.FC<LexiconViewProps> = ({
         <div className="pt-6 border-t border-ink/5 flex justify-end">
             <button 
                 onClick={handleSearchBooks}
-                className="bg-brand-deep text-brand-cyan px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-ink transition-all shadow-lg flex items-center gap-2"
+                disabled={isSearching}
+                className={`bg-brand-deep text-brand-cyan px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-ink transition-all shadow-lg flex items-center gap-2 ${isSearching ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                Consult Curator for New Volumes
+                {isSearching ? (
+                  <span className="animate-pulse">Consulting Curator...</span>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    Consult Curator for New Volumes
+                  </>
+                )}
             </button>
         </div>
       </section>
